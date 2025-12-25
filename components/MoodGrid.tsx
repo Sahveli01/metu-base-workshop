@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAccount, useReadContract } from "wagmi";
-import { BASELOG_ABI, BASELOG_CONTRACT_ADDRESS } from "../lib/contract";
+import { BASELOG_ABI, BASELOG_CONTRACT_ADDRESS } from "@/lib/contract";
 
 export function MoodGrid() {
   const { address } = useAccount();
