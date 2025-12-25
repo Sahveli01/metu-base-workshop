@@ -5,6 +5,5 @@ out = "out"
 libs = ["lib"]
 remappings = [
     "forge-std/=lib/forge-std/src/",
-    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
-    "contracts/=contracts/"
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/"
 ]
