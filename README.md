@@ -1,159 +1,182 @@
-# Waitlist Mini App Quickstart
+# BaseLog - On-Chain Mood Journal
 
-This is a demo Mini App application built using OnchainKit and the Farcaster SDK. Build a waitlist sign-up mini app for your company that can be published to the Base app and Farcaster. 
+BaseLog is a "Year in Pixels" concept moved entirely on-chain. Users check in daily, select a mood (color), and this data is permanently stored on the Base blockchain using highly efficient bit-packing data structures. The output is a Soulbound NFT that visualizes the user's year as a colored grid.
 
-> [!IMPORTANT]  
-> Before interacting with this demo, please review our [disclaimer](#disclaimer) — there are **no official tokens or apps** associated with Cubey, Base, or Coinbase.
+## Features
+
+- **On-Chain Storage**: All mood data is stored directly on the Base blockchain using bit-packing (3 bits per day, ~85 days per uint256)
+- **Soulbound NFT (ERC-5192)**: Each user receives a non-transferable NFT that represents their mood journal
+- **On-Chain SVG**: The NFT image is generated entirely on-chain as an SVG, no IPFS/Arweave needed
+- **Gas Optimized**: Designed for Base's low-cost transactions with efficient storage patterns
+- **Farcaster Mini App**: Fully integrated with Farcaster ecosystem as a Mini App (Frame v2)
+
+## Architecture
+
+### Smart Contract (`BaseLog.sol`)
+
+- **Standard**: ERC-721 with ERC-5192 (Soulbound) implementation
+- **Data Storage**: Bit-packing using `uint256` slots (3 bits per day, supporting 8 mood variants: 0-7)
+- **Visuals**: Pure on-chain SVG generation in `tokenURI()` function
+- **Gas Optimization**: Minimal calldata and storage operations
+
+### Frontend
+
+- **Framework**: Next.js 15 (App Router) with TypeScript
+- **Web3**: OnchainKit, Wagmi, Viem
+- **UI**: TailwindCSS with minimalist pastel design
+- **Components**:
+  - `MoodSelector`: Color buttons for daily mood logging
+  - `MoodGrid`: Displays the on-chain SVG grid
 
 ## Prerequisites
 
-Before getting started, make sure you have:
+- Node.js 18+ and npm/yarn
+- Foundry (for smart contract development)
+- Base app account
+- Farcaster account
+- Coinbase Developer Platform API Key
 
-* Base app account
-* A [Farcaster](https://farcaster.xyz/) account
-* [Vercel](https://vercel.com/) account for hosting the application
-* [Coinbase Developer Platform](https://portal.cdp.coinbase.com/) Client API Key
+## Installation
 
-## Getting Started
-
-### 1. Clone this repository 
-
-```bash
-git clone https://github.com/base/demos.git
-```
-
-### 2. Install dependencies:
+1. **Clone and install dependencies:**
 
 ```bash
-cd demos/minikit/waitlist-mini-app-qs
 npm install
 ```
 
-### 3. Configure environment variables
-
-Create a `.env.local` file and add your environment variables:
+2. **Install Foundry (if not already installed):**
 
 ```bash
-NEXT_PUBLIC_PROJECT_NAME="Your App Name"
-NEXT_PUBLIC_ONCHAINKIT_API_KEY=<Replace-WITH-YOUR-CDP-API-KEY>
-NEXT_PUBLIC_URL=
+curl -L https://foundry.paradigm.xyz | bash
+foundryup
 ```
 
-### 4. Run locally:
+3. **Install OpenZeppelin contracts:**
+
+```bash
+forge install OpenZeppelin/openzeppelin-contracts
+```
+
+4. **Configure environment variables:**
+
+Create a `.env.local` file:
+
+```bash
+NEXT_PUBLIC_ONCHAINKIT_API_KEY=your_cdp_api_key
+NEXT_PUBLIC_URL=http://localhost:3000
+NEXT_PUBLIC_CONTRACT_ADDRESS=0x0000000000000000000000000000000000000000  # Update after deployment
+PRIVATE_KEY=your_private_key_for_deployment
+```
+
+## Smart Contract Deployment
+
+### Deploy to Base Sepolia (Testnet)
+
+1. **Set up environment:**
+
+```bash
+export PRIVATE_KEY=your_private_key
+export RPC_URL=https://sepolia.base.org  # Base Sepolia RPC
+```
+
+2. **Deploy:**
+
+```bash
+forge script script/Deploy.s.sol:DeployScript \
+  --rpc-url $RPC_URL \
+  --broadcast \
+  --verify \
+  --etherscan-api-key $ETHERSCAN_API_KEY
+```
+
+3. **Update contract address:**
+
+After deployment, update `NEXT_PUBLIC_CONTRACT_ADDRESS` in `.env.local` with the deployed contract address.
+
+### Deploy to Base Mainnet
+
+```bash
+forge script script/Deploy.s.sol:DeployScript \
+  --rpc-url https://mainnet.base.org \
+  --broadcast \
+  --verify \
+  --etherscan-api-key $ETHERSCAN_API_KEY
+```
+
+## Development
+
+1. **Run the development server:**
 
 ```bash
 npm run dev
 ```
 
-## Customization
+2. **Open [http://localhost:3000](http://localhost:3000)**
 
-### Update Manifest Configuration
+## Deployment to Vercel
 
-The `minikit.config.ts` file configures your manifest located at `app/.well-known/farcaster.json`.
-
-**Skip the `accountAssociation` object for now.**
-
-To personalize your app, change the `name`, `subtitle`, and `description` fields and add images to your `/public` folder. Then update their URLs in the file.
-
-## Deployment
-
-### 1. Deploy to Vercel
+1. **Deploy:**
 
 ```bash
 vercel --prod
 ```
 
-You should have a URL deployed to a domain similar to: `https://your-vercel-project-name.vercel.app/`
+2. **Update environment variables in Vercel dashboard:**
 
-### 2. Update environment variables
+- `NEXT_PUBLIC_ONCHAINKIT_API_KEY`
+- `NEXT_PUBLIC_URL` (your Vercel URL)
+- `NEXT_PUBLIC_CONTRACT_ADDRESS`
 
-Add your production URL to your local `.env` file:
+3. **Update `minikit.config.ts`:**
 
-```bash
-NEXT_PUBLIC_PROJECT_NAME="Your App Name"
-NEXT_PUBLIC_ONCHAINKIT_API_KEY=<Replace-WITH-YOUR-CDP-API-KEY>
-NEXT_PUBLIC_URL=https://your-vercel-project-name.vercel.app/
-```
+Update the `accountAssociation` object using the [Farcaster Manifest tool](https://farcaster.xyz/~/developers/mini-apps/manifest) with your production domain.
 
-### 3. Upload environment variables to Vercel
+## Contract Functions
 
-Add environment variables to your production environment:
+### User Functions
 
-```bash
-vercel env add NEXT_PUBLIC_PROJECT_NAME production
-vercel env add NEXT_PUBLIC_ONCHAINKIT_API_KEY production
-vercel env add NEXT_PUBLIC_URL production
-```
+- `logMood(uint256 dayIndex, uint8 moodValue)`: Log a mood for a specific day (0-364)
+- `getMood(address user, uint256 dayIndex)`: Get mood value for a specific day
+- `isDayLogged(address user, uint256 dayIndex)`: Check if a day has been logged
+- `generateSVG(address user)`: Generate SVG grid from on-chain data
+- `getUserTokenId(address user)`: Get user's token ID
 
-## Account Association
+### View Functions
 
-### 1. Sign Your Manifest
+- `tokenURI(uint256 tokenId)`: Get NFT metadata with on-chain SVG
+- `locked(uint256 tokenId)`: Check if token is locked (always true for Soulbound)
 
-1. Navigate to [Farcaster Manifest tool](https://farcaster.xyz/~/developers/mini-apps/manifest)
-2. Paste your domain in the form field (ex: your-vercel-project-name.vercel.app)
-3. Click the `Generate account association` button and follow the on-screen instructions for signing with your Farcaster wallet
-4. Copy the `accountAssociation` object
+## Mood Options
 
-### 2. Update Configuration
+- **0 - Great** (Light Green #E8F5E9) 😊
+- **1 - Good** (Light Yellow #FFF9C4) 🙂
+- **2 - Okay** (Light Orange #FFE0B2) 😐
+- **3 - Neutral** (Light Purple #E1BEE7) 😶
+- **4 - Low** (Light Blue #BBDEFB) 😔
+- **5 - Bad** (Gray #CFD8DC) 😞
+- **6 - Stress** (Light Red #FFCDD2) 😰
+- **7 - Very Bad** (Pink #F8BBD0) 😢
 
-Update your `minikit.config.ts` file to include the `accountAssociation` object:
+## Technical Details
 
-```ts
-export const minikitConfig = {
-    accountAssociation: {
-        "header": "your-header-here",
-        "payload": "your-payload-here",
-        "signature": "your-signature-here"
-    },
-    frame: {
-        // ... rest of your frame configuration
-    },
-}
-```
+### Bit-Packing Implementation
 
-### 3. Deploy Updates
+- Each day uses 3 bits (values 0-7)
+- One `uint256` can store ~85 days (256 / 3 = 85.33)
+- A full year (365 days) requires ~5 `uint256` slots
+- Storage pattern: `moodData[user][slotIndex]` where slotIndex = dayIndex / 85
 
-```bash
-vercel --prod
-```
+### SVG Generation
 
-## Testing and Publishing
+- Grid: 7 columns (days of week) × 53 rows (weeks) = 371 cells
+- Each cell: 12px × 12px with 2px spacing
+- Colors determined by mood value from on-chain data
+- Unlogged days shown in light gray (#F5F5F5)
 
-### 1. Preview Your App
+## License
 
-Go to [base.dev/preview](https://base.dev/preview) to validate your app:
+MIT
 
-1. Add your app URL to view the embeds and click the launch button to verify the app launches as expected
-2. Use the "Account association" tab to verify the association credentials were created correctly
-3. Use the "Metadata" tab to see the metadata added from the manifest and identify any missing fields
+## Disclaimer
 
-### 2. Publish to Base App
-
-To publish your app, create a post in the Base app with your app's URL.
-
-## Learn More
-
-For detailed step-by-step instructions, see the [Create a Mini App tutorial](https://docs.base.org/docs/mini-apps/quickstart/create-new-miniapp/) in the Base documentation.
-
-
----
-
-## Disclaimer  
-
-This project is a **demo application** created by the **Base / Coinbase Developer Relations team** for **educational and demonstration purposes only**.  
-
-**There is no token, cryptocurrency, or investment product associated with Cubey, Base, or Coinbase.**  
-
-Any social media pages, tokens, or applications claiming to be affiliated with, endorsed by, or officially connected to Cubey, Base, or Coinbase are **unauthorized and fraudulent**.  
-
-We do **not** endorse or support any third-party tokens, apps, or projects using the Cubey name or branding.  
-
-> [!WARNING]
-> Do **not** purchase, trade, or interact with any tokens or applications claiming affiliation with Coinbase, Base, or Cubey.  
-> Coinbase and Base will never issue a token or ask you to connect your wallet for this demo.  
-
-For official Base developer resources, please visit:  
-- [https://base.org](https://base.org)  
-- [https://docs.base.org](https://docs.base.org)  
-
----
+This project is a demo application created for educational purposes. Always verify smart contracts before deploying to mainnet.

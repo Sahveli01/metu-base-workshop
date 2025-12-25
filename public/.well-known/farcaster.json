@@ -1,0 +1,19 @@
+{
+  "accountAssociation": {
+    "header": "eyJmaWQiOjE5NDc0LCJ0eXBlIjoiY3VzdG9keSIsImtleSI6IjB4N...EXAMPLE...",
+    "payload": "eyJkb21haW4iOiJleGFtcGxlLmNvbSJ9",
+    "signature": "MHgy..."
+  },
+  "frame": {
+    "version": "1",
+    "name": "BaseLog",
+    "iconUrl": "https://raw.githubusercontent.com/viktordanov/mood-tracker/main/public/icon.png",
+    "homeUrl": "https://sahveli-mood.vercel.app",
+    "imageUrl": "https://sahveli-mood.vercel.app/og-image.png",
+    "buttonTitle": "Log Mood",
+    "splashImageUrl": "https://sahveli-mood.vercel.app/splash.png",
+    "splashBackgroundColor": "#eeebff",
+    "webhookUrl": "https://sahveli-mood.vercel.app/api/webhook"
+  }
+}
+

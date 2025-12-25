@@ -1,0 +1,9 @@
+# Base Mini App Development Context
+This project is a Base Mini App (Farcaster Frame v2) built with Next.js and OnchainKit.
+
+## Core Requirements
+1. **Manifest:** Must exist at `public/.well-known/farcaster.json`.
+2. **SDK Provider:** App must be wrapped in `MiniKitProvider` from `@coinbase/onchainkit/minikit`.
+3. **Initialization:** The main page MUST call `useMiniKit` and `setFrameReady()` on mount.
+4. **Network:** Currently using Base Sepolia (Chain ID: 84532).
+
