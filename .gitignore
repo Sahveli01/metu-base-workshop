@@ -37,7 +37,8 @@ next-env.d.ts
 
 # Foundry
 /out/
-/lib/
+# Note: /lib/ removed - we need lib/contract.ts for the Next.js app
+# Foundry lib dependencies are in parent directory, not tracked here
 /cache/
 /broadcast/
 *.sol
