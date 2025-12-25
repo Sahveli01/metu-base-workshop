@@ -16,7 +16,6 @@ export function RootProvider({ children }: { children: ReactNode }) {
         wallet: {
           display: "modal",
           preference: "all",
-          projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID,
         },
       }}
       miniKit={{
