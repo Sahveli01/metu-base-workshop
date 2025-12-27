@@ -7,14 +7,11 @@ import { BASELOG_ABI, BASELOG_CONTRACT_ADDRESS, MOOD_OPTIONS, getDayIndex } from
 export function MoodGrid() {
   const { address } = useAccount();
   const [svgContent, setSvgContent] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [shouldShowGrid, setShouldShowGrid] = useState(false);
   const [pendingMood, setPendingMood] = useState<number | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  const hasScrolledRef = useRef(false);
 
-  // Fetch SVG from contract
-  const { data: svg, refetch: refetchSvg, error: svgError } = useReadContract({
+  // Fetch SVG from contract (optional, we'll use placeholder)
+  const { data: svg, refetch: refetchSvg } = useReadContract({
     address: BASELOG_CONTRACT_ADDRESS,
     abi: BASELOG_ABI,
     functionName: "generateSVG",
@@ -25,27 +22,20 @@ export function MoodGrid() {
     },
   });
 
-  // Generate a simple placeholder SVG based on selected mood
+  // Generate placeholder SVG based on mood
   const generatePlaceholderSVG = (moodValue: number): string => {
     const dayIndex = getDayIndex();
-    const dayOfWeek = dayIndex % 7;
-    const week = Math.floor(dayIndex / 7);
     const moodColor = MOOD_OPTIONS[moodValue]?.color || "#F5F5F5";
     
     let cells = "";
     const cols = 7;
     
     for (let i = 0; i < 365; i++) {
-      const currentWeek = Math.floor(i / 7);
-      const currentDay = i % 7;
-      const x = currentDay * 14;
-      const y = currentWeek * 14;
+      const x = (i % cols) * 14;
+      const y = Math.floor(i / cols) * 14;
       
-      // Highlight today's cell
-      let color = "#F5F5F5";
-      if (i === dayIndex) {
-        color = moodColor;
-      }
+      // Highlight today's cell with selected mood color
+      const color = i === dayIndex ? moodColor : "#F5F5F5";
       
       cells += `<rect x="${x}" y="${y}" width="12" height="12" fill="${color}" rx="2"/>`;
     }
@@ -53,44 +43,33 @@ export function MoodGrid() {
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 750"><rect width="100%" height="100%" fill="#FFFFFF"/>${cells}</svg>`;
   };
 
-  // Listen for transaction success event
+  // Listen for transaction success event - AGGRESSIVE MODE
   useEffect(() => {
     const handleTransactionSuccess = (event: CustomEvent) => {
+      console.log("MoodGrid received transaction success event:", event.detail);
       const moodValue = event.detail?.moodValue ?? null;
-      setPendingMood(moodValue);
-      setShouldShowGrid(true);
-      setIsLoading(true);
       
-      // Generate placeholder SVG immediately
       if (moodValue !== null) {
+        setPendingMood(moodValue);
+        
+        // IMMEDIATELY show placeholder grid
         const placeholderSVG = generatePlaceholderSVG(moodValue);
         setSvgContent(placeholderSVG);
-      }
-      
-      // Scroll to grid immediately
-      setTimeout(() => {
-        if (gridRef.current && !hasScrolledRef.current) {
-          gridRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-          hasScrolledRef.current = true;
-        }
-      }, 100);
-      
-      // Try to fetch real SVG from contract with retries
-      const retries = [3000, 6000, 10000, 15000, 20000];
-      
-      retries.forEach((delay) => {
+        
+        // IMMEDIATELY scroll to grid
+        setTimeout(() => {
+          if (gridRef.current) {
+            gridRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 100);
+        
+        // Try to fetch real SVG in background (don't wait for it)
         setTimeout(() => {
           refetchSvg().catch(() => {
-            // Silently handle errors, keep placeholder
+            // Keep placeholder if contract fails
           });
-        }, delay);
-      });
-      
-      // Stop loading after all retries
-      setTimeout(() => {
-        setIsLoading(false);
-        hasScrolledRef.current = false;
-      }, retries[retries.length - 1] + 3000);
+        }, 2000);
+      }
     };
 
     window.addEventListener("moodTransactionSuccess", handleTransactionSuccess as EventListener);
@@ -99,11 +78,10 @@ export function MoodGrid() {
     };
   }, [refetchSvg]);
 
-  // Update SVG content when contract returns data
+  // Update SVG if contract returns data (optional enhancement)
   useEffect(() => {
     if (svg && typeof svg === "string" && svg.trim().length > 0) {
       setSvgContent(svg);
-      setIsLoading(false);
       setPendingMood(null);
     }
   }, [svg]);
@@ -118,15 +96,15 @@ export function MoodGrid() {
     );
   }
 
-  // Show grid if we have SVG content (either from contract or placeholder)
+  // Show grid if we have SVG content
   if (svgContent) {
     return (
       <div ref={gridRef} className="mood-grid-container p-6 bg-white rounded-2xl shadow-sm border border-gray-100">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-900">Your Year in Pixels</h2>
           {pendingMood !== null && (
-            <span className="text-xs text-gray-500 bg-yellow-50 px-2 py-1 rounded">
-              Updating from blockchain...
+            <span className="text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded">
+              Saved!
             </span>
           )}
         </div>
@@ -142,29 +120,9 @@ export function MoodGrid() {
           />
         </div>
         
-        {pendingMood !== null && (
-          <p className="mt-4 text-sm text-center text-blue-600">
-            ⏳ Your mood has been saved! The grid is updating from the blockchain...
-          </p>
-        )}
-        
         <p className="mt-4 text-sm text-center text-gray-500">
           Each square represents a day. Log your mood daily to build your on-chain journal.
         </p>
-      </div>
-    );
-  }
-
-  // Show loading or empty state
-  if (isLoading) {
-    return (
-      <div className="mood-grid-container p-8 bg-white rounded-2xl shadow-sm border border-gray-100">
-        <div className="flex flex-col items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-          <p className="text-center text-gray-600">
-            Loading your grid...
-          </p>
-        </div>
       </div>
     );
   }

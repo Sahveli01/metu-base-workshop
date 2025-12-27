@@ -11,7 +11,7 @@ export function MoodSelector() {
   const { switchChain } = useSwitchChain();
   const [selectedMood, setSelectedMood] = useState<number | null>(null);
   const dayIndex = getDayIndex();
-  const transactionSentRef = useRef(false);
+  const eventDispatchedRef = useRef<string | null>(null);
 
   const {
     writeContract,
@@ -20,12 +20,12 @@ export function MoodSelector() {
     error: writeError,
   } = useWriteContract();
 
-  const { isLoading: isConfirming, isSuccess: isConfirmed, isError: isConfirmError } =
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
     useWaitForTransactionReceipt({
       hash,
       query: {
         enabled: !!hash,
-        retry: 3,
+        retry: false,
       },
     });
 
@@ -34,11 +34,9 @@ export function MoodSelector() {
   const handleMoodSelect = async (moodValue: number) => {
     if (!address) return;
     
-    // Force network switch to Base Sepolia (84532) if not already on it
     if (chainId !== 84532) {
       try {
         await switchChain({ chainId: 84532 });
-        // Wait a moment for chain switch to complete
         await new Promise(resolve => setTimeout(resolve, 1000));
       } catch (error) {
         console.error("Failed to switch chain:", error);
@@ -47,7 +45,7 @@ export function MoodSelector() {
     }
     
     setSelectedMood(moodValue);
-    transactionSentRef.current = false;
+    eventDispatchedRef.current = null;
     
     writeContract({
       address: BASELOG_CONTRACT_ADDRESS,
@@ -59,58 +57,37 @@ export function MoodSelector() {
 
   const isProcessing = isPending || isConfirming;
 
-  // Debug: Log transaction hash
+  // RADICAL APPROACH: Dispatch event AS SOON AS hash is available (not pending)
   useEffect(() => {
-    if (hash) {
-      console.log("Transaction hash:", hash);
-      transactionSentRef.current = true;
-    }
-  }, [hash]);
-
-  // When transaction is confirmed OR hash exists (fallback)
-  useEffect(() => {
-    // If confirmed, dispatch immediately
-    if (isConfirmed && selectedMood !== null && transactionSentRef.current) {
-      console.log("Transaction confirmed!");
-      setShowSuccessMessage(true);
-      
-      setTimeout(() => {
+    if (hash && !isPending && selectedMood !== null) {
+      // Only dispatch once per hash
+      if (eventDispatchedRef.current !== hash) {
+        console.log("Transaction hash received, dispatching event immediately:", hash);
+        eventDispatchedRef.current = hash;
+        setShowSuccessMessage(true);
+        
+        // Dispatch immediately, don't wait for confirmation
         window.dispatchEvent(new CustomEvent("moodTransactionSuccess", {
-          detail: { moodValue: selectedMood }
+          detail: { moodValue: selectedMood, hash }
         }));
-      }, 300);
-      
+        
+        // Also dispatch on confirmation (if it happens)
+        if (isConfirmed) {
+          console.log("Transaction also confirmed!");
+        }
+      }
+    }
+  }, [hash, isPending, selectedMood, isConfirmed]);
+
+  // Clear success message after delay
+  useEffect(() => {
+    if (showSuccessMessage) {
       const timer = setTimeout(() => {
         setShowSuccessMessage(false);
-        setSelectedMood(null);
-        transactionSentRef.current = false;
-      }, 15000);
+      }, 10000);
       return () => clearTimeout(timer);
     }
-    
-    // Fallback: If we have hash but not confirmed after 5 seconds, dispatch anyway
-    if (hash && selectedMood !== null && !isConfirmed && !isProcessing && transactionSentRef.current) {
-      const fallbackTimer = setTimeout(() => {
-        // Only dispatch if still not confirmed
-        if (!isConfirmed) {
-          console.log("Transaction hash exists, dispatching event (fallback)");
-          setShowSuccessMessage(true);
-          
-          window.dispatchEvent(new CustomEvent("moodTransactionSuccess", {
-            detail: { moodValue: selectedMood }
-          }));
-          
-          setTimeout(() => {
-            setShowSuccessMessage(false);
-            setSelectedMood(null);
-            transactionSentRef.current = false;
-          }, 15000);
-        }
-      }, 5000);
-      
-      return () => clearTimeout(fallbackTimer);
-    }
-  }, [isConfirmed, selectedMood, hash, isProcessing]);
+  }, [showSuccessMessage]);
 
   return (
     <div className="mood-selector">
@@ -173,21 +150,21 @@ export function MoodSelector() {
         ))}
       </div>
 
-      {isProcessing && !isConfirmed && (
+      {isPending && (
         <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm text-center">
-          ⏳ Processing transaction... {hash && `(Hash: ${hash.slice(0, 10)}...)`}
+          ⏳ Sending transaction...
+        </div>
+      )}
+
+      {hash && !isPending && (
+        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm text-center">
+          ✓ Transaction sent! View your grid above. {isConfirming && "(Confirming...)"}
         </div>
       )}
 
       {writeError && (
         <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm text-center">
           Error: {writeError.message}
-        </div>
-      )}
-
-      {(isConfirmed || showSuccessMessage) && (
-        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm text-center">
-          ✓ Mood logged successfully! View your updated grid above.
         </div>
       )}
     </div>
