@@ -10,6 +10,16 @@ export function MoodGrid() {
   const [error, setError] = useState<string | null>(null);
   const [contractError, setContractError] = useState<boolean>(false);
 
+  // Check if contract exists by calling name() function
+  const { data: contractName, error: contractCheckError } = useReadContract({
+    address: BASELOG_CONTRACT_ADDRESS,
+    abi: BASELOG_ABI,
+    functionName: "name",
+    query: {
+      retry: false,
+    },
+  });
+
   // Check if user has a token - with better error handling
   const { data: balance, error: balanceError } = useReadContract({
     address: BASELOG_CONTRACT_ADDRESS,
@@ -17,7 +27,7 @@ export function MoodGrid() {
     functionName: "balanceOf",
     args: address ? [address] : undefined,
     query: {
-      enabled: !!address,
+      enabled: !!address && !contractError,
       retry: false, // Don't retry on failure
     },
   });
@@ -35,19 +45,25 @@ export function MoodGrid() {
   });
 
   useEffect(() => {
-    // Check if contract address is invalid (balanceOf returns error)
-    if (balanceError) {
-      console.error("Contract read error:", balanceError);
-      // Check if it's a contract not found error
-      const errorMessage = balanceError.message || balanceError.toString();
-      if (errorMessage.includes("returned no data") || 
-          errorMessage.includes("is not a contract") ||
+    // Check if contract exists by checking name() call
+    if (contractCheckError) {
+      const errorMessage = contractCheckError.message || contractCheckError.toString();
+      if (errorMessage.includes("is not a contract") || 
+          errorMessage.includes("returned no data") ||
           errorMessage.includes("ContractFunctionZeroDataError")) {
         setContractError(true);
         setError("Contract address not found. Please check your configuration.");
       }
-    } else {
+    } else if (contractName) {
+      // Contract exists (name() call succeeded)
       setContractError(false);
+    }
+  }, [contractCheckError, contractName]);
+
+  useEffect(() => {
+    // balanceOf errors are not critical - they just mean user has no tokens
+    if (balanceError) {
+      console.warn("Balance check error (user may have no tokens):", balanceError);
     }
   }, [balanceError]);
 
@@ -118,7 +134,8 @@ export function MoodGrid() {
     );
   }
 
-  if (!balance || balance === 0n) {
+  // If balance is 0 or balanceOf failed (but contract exists), show "log first mood" message
+  if ((!balance || balance === 0n) && !contractError) {
     return (
       <div className="mood-grid-container p-8 bg-white rounded-2xl shadow-sm border border-gray-100">
         <p className="text-center text-gray-500">
