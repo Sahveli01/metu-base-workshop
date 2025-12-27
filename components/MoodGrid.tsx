@@ -8,27 +8,17 @@ export function MoodGrid() {
   const { address } = useAccount();
   const [svgContent, setSvgContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [contractError, setContractError] = useState<boolean>(false);
 
-  // Check if contract exists by calling name() function
-  const { data: contractName, error: contractCheckError } = useReadContract({
-    address: BASELOG_CONTRACT_ADDRESS,
-    abi: BASELOG_ABI,
-    functionName: "name",
-    query: {
-      retry: false,
-    },
-  });
-
-  // Check if user has a token - with better error handling
+  // Check if user has a token
+  // Note: If contract doesn't exist, this will fail silently and balance will be undefined
   const { data: balance, error: balanceError } = useReadContract({
     address: BASELOG_CONTRACT_ADDRESS,
     abi: BASELOG_ABI,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
     query: {
-      enabled: !!address && !contractError,
-      retry: false, // Don't retry on failure
+      enabled: !!address,
+      retry: false,
     },
   });
 
@@ -39,31 +29,16 @@ export function MoodGrid() {
     functionName: "generateSVG",
     args: address ? [address] : undefined,
     query: {
-      enabled: !!address && !!balance && balance > 0n && !contractError,
+      enabled: !!address && !!balance && balance > 0n,
       retry: false,
     },
   });
 
   useEffect(() => {
-    // Check if contract exists by checking name() call
-    if (contractCheckError) {
-      const errorMessage = contractCheckError.message || contractCheckError.toString();
-      if (errorMessage.includes("is not a contract") || 
-          errorMessage.includes("returned no data") ||
-          errorMessage.includes("ContractFunctionZeroDataError")) {
-        setContractError(true);
-        setError("Contract address not found. Please check your configuration.");
-      }
-    } else if (contractName) {
-      // Contract exists (name() call succeeded)
-      setContractError(false);
-    }
-  }, [contractCheckError, contractName]);
-
-  useEffect(() => {
-    // balanceOf errors are not critical - they just mean user has no tokens
+    // Log balance errors but don't treat them as critical
+    // They could mean: user has no tokens, contract doesn't exist, or RPC issue
     if (balanceError) {
-      console.warn("Balance check error (user may have no tokens):", balanceError);
+      console.warn("Balance check error:", balanceError);
     }
   }, [balanceError]);
 
@@ -89,7 +64,7 @@ export function MoodGrid() {
 
   // Refetch SVG when address changes or after a delay (to catch updates)
   useEffect(() => {
-    if (address && balance && balance > 0n && !contractError) {
+    if (address && balance && balance > 0n) {
       const timer = setTimeout(() => {
         try {
           refetchSvg();
@@ -100,7 +75,7 @@ export function MoodGrid() {
       }, 3000); // Refetch after 3 seconds
       return () => clearTimeout(timer);
     }
-  }, [address, balance, refetchSvg, contractError]);
+  }, [address, balance, refetchSvg]);
 
   if (!address) {
     return (
@@ -112,30 +87,8 @@ export function MoodGrid() {
     );
   }
 
-  // Show contract error message if contract is not found
-  if (contractError) {
-    return (
-      <div className="mood-grid-container p-8 bg-white rounded-2xl shadow-sm border border-gray-100">
-        <div className="flex flex-col items-center justify-center py-12">
-          <div className="w-32 h-32 bg-gradient-to-br from-red-200 to-orange-200 rounded-lg flex items-center justify-center mb-4">
-            <span className="text-4xl">⚠️</span>
-          </div>
-          <p className="text-gray-600 text-sm text-center mb-2 font-semibold">
-            Contract Not Found
-          </p>
-          <p className="text-gray-500 text-xs text-center mb-4 max-w-md">
-            The contract address <code className="bg-gray-100 px-2 py-1 rounded">{BASELOG_CONTRACT_ADDRESS}</code> is not deployed or invalid.
-          </p>
-          <p className="text-gray-500 text-xs text-center max-w-md">
-            Please make sure the contract is deployed to Base Sepolia and the address is set correctly in your .env.local file as NEXT_PUBLIC_CONTRACT_ADDRESS.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // If balance is 0 or balanceOf failed (but contract exists), show "log first mood" message
-  if ((!balance || balance === 0n) && !contractError) {
+  // If balance is 0 or balanceOf failed, show "log first mood" message
+  if (!balance || balance === 0n) {
     return (
       <div className="mood-grid-container p-8 bg-white rounded-2xl shadow-sm border border-gray-100">
         <p className="text-center text-gray-500">
@@ -151,7 +104,7 @@ export function MoodGrid() {
         <h2 className="text-xl font-semibold text-gray-900">Your Year in Pixels</h2>
       </div>
       
-      {error && !contractError ? (
+      {error ? (
         <div className="flex flex-col items-center justify-center py-12">
           <div className="w-32 h-32 bg-gradient-to-br from-purple-200 to-pink-200 rounded-lg flex items-center justify-center mb-4">
             <span className="text-4xl">📊</span>
