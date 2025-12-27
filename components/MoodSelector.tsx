@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useConnect, useChainId, useSwitchChain } from "wagmi";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
+import { useConnectModal } from "@coinbase/onchainkit/wallet";
 import { BASELOG_ABI, BASELOG_CONTRACT_ADDRESS, MOOD_OPTIONS, getDayIndex } from "@/lib/contract";
 
 export function MoodSelector() {
@@ -10,11 +11,40 @@ export function MoodSelector() {
   const { connectors, connect } = useConnect();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
-  const { context } = useMiniKit();
+  const { context, isFrameReady } = useMiniKit();
+  const { openConnectModal } = useConnectModal();
   
   // Try to get address from MiniKit context if wagmi address is not available
   // MiniKit context doesn't have custodyAddress, so we'll use wagmi address only
   const effectiveAddress = address;
+  
+  // Auto-connect on mount if in MiniApp
+  useEffect(() => {
+    if (!address && context && isFrameReady && connectors && connectors.length > 0) {
+      // Try to auto-connect after a short delay
+      const timer = setTimeout(() => {
+        // Find MiniApp connector
+        const miniappConnector = connectors.find(c => 
+          c.id === 'farcaster' || 
+          c.id === 'miniapp' || 
+          c.name?.toLowerCase().includes('farcaster') ||
+          c.name?.toLowerCase().includes('miniapp')
+        );
+        
+        if (miniappConnector) {
+          connect({ connector: miniappConnector }).catch(() => {
+            // Silent fail, user can manually connect
+          });
+        } else if (connectors[0]) {
+          connect({ connector: connectors[0] }).catch(() => {
+            // Silent fail, user can manually connect
+          });
+        }
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [address, context, isFrameReady, connectors, connect]);
   const [selectedMood, setSelectedMood] = useState<number | null>(null);
   const dayIndex = getDayIndex();
   const eventDispatchedRef = useRef<string | null>(null);
@@ -118,16 +148,24 @@ export function MoodSelector() {
               </p>
               <button
                 onClick={() => {
-                  // Find MiniApp connector first, then fallback to first available
-                  const miniappConnector = connectors?.find(c => 
-                    c.id === 'farcaster' || c.id === 'miniapp' || c.name?.toLowerCase().includes('farcaster')
-                  );
-                  const connectorToUse = miniappConnector || connectors?.[0];
-                  
-                  if (connectorToUse) {
-                    connect({ connector: connectorToUse });
-                  } else if (connectors && connectors.length > 0) {
-                    connect({ connector: connectors[0] });
+                  // Use OnchainKit's connect modal for better MiniApp support
+                  if (openConnectModal) {
+                    openConnectModal();
+                  } else {
+                    // Fallback to manual connector selection
+                    const miniappConnector = connectors?.find(c => 
+                      c.id === 'farcaster' || 
+                      c.id === 'miniapp' || 
+                      c.name?.toLowerCase().includes('farcaster') ||
+                      c.name?.toLowerCase().includes('miniapp')
+                    );
+                    const connectorToUse = miniappConnector || connectors?.[0];
+                    
+                    if (connectorToUse) {
+                      connect({ connector: connectorToUse }).catch(console.error);
+                    } else if (connectors && connectors.length > 0) {
+                      connect({ connector: connectors[0] }).catch(console.error);
+                    }
                   }
                 }}
                 className="group relative px-8 py-3.5 rounded-2xl font-medium text-white bg-gradient-to-r from-purple-600/90 to-blue-600/90 hover:from-purple-500 hover:to-blue-500 transition-all duration-300 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-[1.02] active:scale-[0.98] backdrop-blur-sm border border-white/20 overflow-hidden"
