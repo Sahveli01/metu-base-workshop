@@ -39,9 +39,10 @@ export default function Home() {
 
         <div className={styles.mainContent}>
           <Suspense fallback={
-            <div className="mood-grid-container p-8 bg-white rounded-2xl shadow-sm border border-gray-100">
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-300"></div>
+            <div className="relative backdrop-blur-xl bg-gradient-to-br from-slate-900/80 via-slate-800/70 to-slate-900/80 rounded-3xl p-8 md:p-10 border border-white/10 shadow-2xl">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 rounded-3xl pointer-events-none" />
+              <div className="relative z-10 flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-white/20 border-t-white/60"></div>
               </div>
             </div>
           }>
