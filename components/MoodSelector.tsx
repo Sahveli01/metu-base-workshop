@@ -53,10 +53,13 @@ export function MoodSelector() {
 
   const isProcessing = isPending || isConfirming;
 
-  // Show success message when transaction is confirmed
+  // When transaction is confirmed, dispatch event to trigger grid refresh
   useEffect(() => {
     if (isConfirmed) {
       setShowSuccessMessage(true);
+      // Dispatch custom event to notify MoodGrid to refresh
+      window.dispatchEvent(new CustomEvent("moodTransactionSuccess"));
+      
       // Clear success message after 10 seconds
       const timer = setTimeout(() => {
         setShowSuccessMessage(false);
@@ -146,4 +149,3 @@ export function MoodSelector() {
     </div>
   );
 }
-
