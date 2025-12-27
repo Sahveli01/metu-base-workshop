@@ -34,6 +34,7 @@ export function MoodSelector() {
   const handleMoodSelect = async (moodValue: number) => {
     if (!address) return;
     
+    // Auto-switch to Base Sepolia if needed (silent)
     if (chainId !== 84532) {
       try {
         await switchChain({ chainId: 84532 });
@@ -115,26 +116,16 @@ export function MoodSelector() {
                     connect({ connector: connectors[0] });
                   }
                 }}
-                className="group relative px-8 py-3.5 rounded-2xl font-medium text-white bg-gradient-to-r from-purple-600/90 to-blue-600/90 hover:from-purple-500 hover:to-blue-500 transition-all duration-300 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 hover:scale-[1.02] active:scale-[0.98] backdrop-blur-sm border border-white/20"
+                className="group relative px-8 py-3.5 rounded-2xl font-medium text-white bg-gradient-to-r from-purple-600/90 to-blue-600/90 hover:from-purple-500 hover:to-blue-500 transition-all duration-300 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-[1.02] active:scale-[0.98] backdrop-blur-sm border border-white/20 overflow-hidden"
               >
                 <span className="relative z-10">Connect Wallet</span>
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/30 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl" />
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
               </button>
             </div>
           )}
 
-          {/* Network Warning */}
-          {address && chainId !== 84532 && (
-            <div className="mb-6 p-4 backdrop-blur-md bg-amber-500/10 border border-amber-400/30 rounded-2xl text-amber-300/90 text-sm text-center animate-slide-in-top">
-              <span className="inline-block mb-2">⚠️</span> Please switch to Base Sepolia network to log your mood
-              <button
-                onClick={() => switchChain({ chainId: 84532 })}
-                className="ml-3 underline font-medium text-amber-200 hover:text-amber-100 transition-colors duration-200"
-              >
-                Switch Network
-              </button>
-            </div>
-          )}
 
           {/* Mood Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -145,7 +136,7 @@ export function MoodSelector() {
                 disabled={!address || isProcessing}
                 className={`
                   group relative p-5 md:p-6 rounded-2xl transition-all duration-300 ease-out
-                  backdrop-blur-md border
+                  backdrop-blur-md border overflow-hidden
                   ${selectedMood === mood.value
                     ? "scale-105 border-white/40 shadow-2xl shadow-current/30 ring-2 ring-white/20"
                     : "border-white/10 hover:border-white/20 hover:scale-[1.03] hover:shadow-xl"
@@ -167,14 +158,36 @@ export function MoodSelector() {
                 {/* Glow effect on selected */}
                 {selectedMood === mood.value && (
                   <div 
-                    className="absolute inset-0 rounded-2xl opacity-50 blur-xl -z-10"
+                    className="absolute inset-0 rounded-2xl opacity-50 blur-xl -z-10 animate-pulse"
                     style={{ backgroundColor: mood.color }}
                   />
                 )}
                 
+                {/* Hover glow effect - mood color based */}
+                <div 
+                  className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-30 transition-opacity duration-300 blur-md -z-10"
+                  style={{ backgroundColor: mood.color }}
+                />
+                
                 <div className="relative z-10 flex flex-col items-center justify-center">
-                  <div className="text-4xl md:text-5xl mb-2.5 transform transition-transform duration-300 group-hover:scale-110">
-                    {mood.emoji}
+                  <div className="relative text-4xl md:text-5xl mb-2.5 transform transition-all duration-300 group-hover:scale-110">
+                    <span className="relative z-10 inline-block">{mood.emoji}</span>
+                    <div 
+                      className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-lg -z-0"
+                      style={{
+                        textShadow: `0 0 20px ${mood.color}, 0 0 40px ${mood.color}CC`,
+                      }}
+                    >
+                      {mood.emoji}
+                    </div>
+                    <div 
+                      className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity duration-300 blur-xl -z-0"
+                      style={{
+                        textShadow: `0 0 30px ${mood.color}80`,
+                      }}
+                    >
+                      {mood.emoji}
+                    </div>
                   </div>
                   <div className="text-xs md:text-sm font-medium text-white/90 tracking-wide">
                     {mood.label}
@@ -186,16 +199,23 @@ export function MoodSelector() {
 
           {/* Status Messages */}
           {isPending && (
-            <div className="mt-6 p-4 backdrop-blur-md bg-blue-500/10 border border-blue-400/30 rounded-2xl text-blue-300/90 text-sm text-center animate-slide-in-bottom">
-              <span className="inline-block animate-spin mr-2">⏳</span>
-              Sending transaction...
+            <div className="mt-6 p-4 backdrop-blur-md bg-blue-500/10 border border-blue-400/30 rounded-2xl text-blue-300/90 text-sm text-center animate-slide-in-bottom relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/20 to-blue-500/0 animate-pulse" />
+              <span className="relative z-10 inline-block animate-spin mr-2">⏳</span>
+              <span className="relative z-10">Sending transaction...</span>
             </div>
           )}
 
           {hash && !isPending && (
-            <div className="mt-6 p-4 backdrop-blur-md bg-emerald-500/10 border border-emerald-400/30 rounded-2xl text-emerald-300/90 text-sm text-center animate-slide-in-bottom">
-              <span className="inline-block mr-2">✓</span>
-              Transaction sent! View your grid above. {isConfirming && <span className="text-emerald-200/70">(Confirming...)</span>}
+            <div className="mt-6 p-4 backdrop-blur-md bg-emerald-500/10 border border-emerald-400/30 rounded-2xl text-emerald-300/90 text-sm text-center animate-slide-in-bottom relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/20 to-emerald-500/0 animate-pulse" />
+              <span className="relative z-10 inline-flex items-center justify-center mr-2">
+                <span className="inline-block animate-bounce">✓</span>
+              </span>
+              <span className="relative z-10">
+                Transaction confirmed! View your grid above.
+              </span>
+              <div className="absolute inset-0 bg-emerald-500/10 animate-ping opacity-75" />
             </div>
           )}
 

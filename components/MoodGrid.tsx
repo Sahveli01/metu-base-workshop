@@ -156,6 +156,8 @@ export function MoodGrid() {
                       className="relative group"
                       onMouseEnter={() => setHoveredDay(index)}
                       onMouseLeave={() => setHoveredDay(null)}
+                      onClick={() => setHoveredDay(hoveredDay === index ? null : index)}
+                      onTouchStart={() => setHoveredDay(hoveredDay === index ? null : index)}
                       style={{
                         width: 'calc((100% - 20px) / 21)',
                         maxWidth: 'calc((100% - 20px) / 21)',
@@ -251,9 +253,11 @@ export function MoodGrid() {
           <div className="flex flex-col items-center gap-2">
             <button
               onClick={() => console.log("Mint clicked")}
-              className="w-full px-6 py-3 bg-white text-slate-900 font-medium rounded-xl hover:bg-white/90 transition-all duration-200 shadow-lg hover:shadow-xl active:scale-[0.98]"
+              className="group relative w-full px-6 py-3 bg-white text-slate-900 font-medium rounded-xl hover:bg-white/90 transition-all duration-200 shadow-lg hover:shadow-xl active:scale-[0.98] overflow-hidden"
             >
-              Mint Your Year in Pixels NFT
+              <span className="relative z-10">Mint Your Year in Pixels NFT</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
             </button>
             <p className="text-xs text-gray-400 font-light">
               Soulbound NFT (Non-transferable)
@@ -262,9 +266,10 @@ export function MoodGrid() {
 
           <button
             onClick={() => console.log("Share clicked")}
-            className="w-full px-6 py-3 border-2 border-white/20 text-white font-medium rounded-xl hover:border-white/30 hover:bg-white/5 transition-all duration-200 active:scale-[0.98]"
+            className="group relative w-full px-6 py-3 border-2 border-white/20 text-white font-medium rounded-xl hover:border-white/30 hover:bg-white/5 transition-all duration-200 active:scale-[0.98] overflow-hidden"
           >
-            Share on Farcaster
+            <span className="relative z-10">Share on Farcaster</span>
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </button>
         </div>
       </div>
