@@ -28,7 +28,7 @@ export const BASELOG_ABI = [
     type: "function",
   },
   {
-    inputs: [{ internalType: "address", name: "", type: "address" }],
+    inputs: [{ internalType: "address", name: "owner", type: "address" }],
     name: "balanceOf",
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
