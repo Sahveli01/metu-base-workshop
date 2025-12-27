@@ -21,25 +21,26 @@ export function MoodSelector() {
     if (!address && context && isFrameReady && connectors && connectors.length > 0) {
       // Try to auto-connect after a short delay to ensure frame is ready
       const timer = setTimeout(() => {
-        // Find MiniApp/Farcaster connector
-        const miniappConnector = connectors.find(c => {
-          const id = c.id?.toLowerCase() || '';
-          const name = c.name?.toLowerCase() || '';
-          return id.includes('farcaster') || 
-                 id.includes('miniapp') || 
-                 name.includes('farcaster') ||
-                 name.includes('miniapp');
-        });
-        
-        if (miniappConnector) {
-          connect({ connector: miniappConnector }).catch(() => {
-            // Silent fail, user can manually connect
+        try {
+          // Find MiniApp/Farcaster connector
+          const miniappConnector = connectors.find(c => {
+            const id = c.id?.toLowerCase() || '';
+            const name = c.name?.toLowerCase() || '';
+            return id.includes('farcaster') || 
+                   id.includes('miniapp') || 
+                   name.includes('farcaster') ||
+                   name.includes('miniapp');
           });
-        } else if (connectors[0]) {
-          // Fallback to first available connector
-          connect({ connector: connectors[0] }).catch(() => {
-            // Silent fail, user can manually connect
-          });
+          
+          if (miniappConnector) {
+            connect({ connector: miniappConnector });
+          } else if (connectors[0]) {
+            // Fallback to first available connector
+            connect({ connector: connectors[0] });
+          }
+        } catch (error) {
+          // Silent fail, user can manually connect
+          console.error("Auto-connect failed:", error);
         }
       }, 1500);
       
@@ -148,7 +149,7 @@ export function MoodSelector() {
                 Please connect your wallet to log your mood
               </p>
               <button
-                onClick={async () => {
+                onClick={() => {
                   try {
                     // Find MiniApp/Farcaster connector first
                     const miniappConnector = connectors?.find(c => {
@@ -163,16 +164,16 @@ export function MoodSelector() {
                     const connectorToUse = miniappConnector || connectors?.[0];
                     
                     if (connectorToUse) {
-                      await connect({ connector: connectorToUse });
+                      connect({ connector: connectorToUse });
                     } else if (connectors && connectors.length > 0) {
-                      await connect({ connector: connectors[0] });
+                      connect({ connector: connectors[0] });
                     }
                   } catch (error) {
                     console.error("Failed to connect wallet:", error);
                     // Try to connect with any available connector as last resort
                     if (connectors && connectors.length > 0) {
                       try {
-                        await connect({ connector: connectors[0] });
+                        connect({ connector: connectors[0] });
                       } catch (e) {
                         console.error("All connection attempts failed:", e);
                       }
