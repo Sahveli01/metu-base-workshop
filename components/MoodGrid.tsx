@@ -20,8 +20,8 @@ export function MoodGrid() {
   const [moodData, setMoodData] = useState<Map<number, DayData>>(new Map());
   const gridRef = useRef<HTMLDivElement>(null);
   
-  // Try to get address from MiniKit context if wagmi address is not available
-  const effectiveAddress = address || context?.user?.custodyAddress;
+  // Use wagmi address (MiniKit auto-connect should handle wallet connection)
+  const effectiveAddress = address;
 
   // Get today's index
   const todayIndex = useMemo(() => getDayIndex(), []);

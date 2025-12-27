@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useConnect, useChainId, useSwitchChain } from "wagmi";
-import { ConnectButton } from "@coinbase/onchainkit";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { BASELOG_ABI, BASELOG_CONTRACT_ADDRESS, MOOD_OPTIONS, getDayIndex } from "@/lib/contract";
 
@@ -14,7 +13,8 @@ export function MoodSelector() {
   const { context } = useMiniKit();
   
   // Try to get address from MiniKit context if wagmi address is not available
-  const effectiveAddress = address || context?.user?.custodyAddress;
+  // MiniKit context doesn't have custodyAddress, so we'll use wagmi address only
+  const effectiveAddress = address;
   const [selectedMood, setSelectedMood] = useState<number | null>(null);
   const dayIndex = getDayIndex();
   const eventDispatchedRef = useRef<string | null>(null);
@@ -116,9 +116,27 @@ export function MoodSelector() {
               <p className="text-white/60 mb-6 text-sm md:text-base font-light tracking-wide">
                 Please connect your wallet to log your mood
               </p>
-              <div className="[&_button]:!px-8 [&_button]:!py-3.5 [&_button]:!rounded-2xl [&_button]:!font-medium [&_button]:!text-white [&_button]:!bg-gradient-to-r [&_button]:!from-purple-600/90 [&_button]:!to-blue-600/90 [&_button]:!hover:from-purple-500 [&_button]:!hover:to-blue-500 [&_button]:!transition-all [&_button]:!duration-300 [&_button]:!shadow-lg [&_button]:!shadow-purple-500/20 [&_button]:!hover:shadow-purple-500/40 [&_button]:!hover:scale-[1.02] [&_button]:!active:scale-[0.98] [&_button]:!backdrop-blur-sm [&_button]:!border [&_button]:!border-white/20 [&_button]:!overflow-hidden">
-                <ConnectButton />
-              </div>
+              <button
+                onClick={() => {
+                  // Find MiniApp connector first, then fallback to first available
+                  const miniappConnector = connectors?.find(c => 
+                    c.id === 'farcaster' || c.id === 'miniapp' || c.name?.toLowerCase().includes('farcaster')
+                  );
+                  const connectorToUse = miniappConnector || connectors?.[0];
+                  
+                  if (connectorToUse) {
+                    connect({ connector: connectorToUse });
+                  } else if (connectors && connectors.length > 0) {
+                    connect({ connector: connectors[0] });
+                  }
+                }}
+                className="group relative px-8 py-3.5 rounded-2xl font-medium text-white bg-gradient-to-r from-purple-600/90 to-blue-600/90 hover:from-purple-500 hover:to-blue-500 transition-all duration-300 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-[1.02] active:scale-[0.98] backdrop-blur-sm border border-white/20 overflow-hidden"
+              >
+                <span className="relative z-10">Connect Wallet</span>
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/30 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl" />
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+              </button>
             </div>
           )}
 
