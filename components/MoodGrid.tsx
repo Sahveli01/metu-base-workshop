@@ -109,7 +109,7 @@ export function MoodGrid() {
       
       <div className="relative z-10">
         {/* Header */}
-        <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-2xl md:text-3xl font-light text-white/95 tracking-tight mb-1">
               Your Year in Pixels
@@ -127,24 +127,24 @@ export function MoodGrid() {
         </div>
 
         {/* NFT Pixel Art Grid */}
-        <div className="relative mb-6 flex justify-center w-full">
-          <div className="relative w-full max-w-2xl mx-auto">
+        <div className="relative mb-4 flex justify-center w-full">
+          <div className="relative w-full max-w-xl mx-auto">
             {/* NFT Frame */}
-            <div className="relative p-6 md:p-8 bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm border-2 border-white/25 rounded-2xl shadow-2xl shadow-black/40">
+            <div className="relative p-3 md:p-4 bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm border-2 border-white/25 rounded-xl shadow-2xl shadow-black/40">
               {/* Outer glow */}
-              <div className="absolute -inset-3 bg-gradient-to-br from-purple-500/20 via-blue-500/20 to-transparent rounded-2xl blur-2xl -z-10" />
+              <div className="absolute -inset-2 bg-gradient-to-br from-purple-500/20 via-blue-500/20 to-transparent rounded-xl blur-xl -z-10" />
               
               {/* Corner decorations */}
-              <div className="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-white/40 rounded-tl" />
-              <div className="absolute top-3 right-3 w-6 h-6 border-t-2 border-r-2 border-white/40 rounded-tr" />
-              <div className="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-white/40 rounded-bl" />
-              <div className="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-white/40 rounded-br" />
+              <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-white/40 rounded-tl" />
+              <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-white/40 rounded-tr" />
+              <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-white/40 rounded-bl" />
+              <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-white/40 rounded-br" />
               
               {/* Inner border */}
-              <div className="absolute inset-4 border border-white/15 rounded-lg pointer-events-none" />
+              <div className="absolute inset-2 border border-white/15 rounded-lg pointer-events-none" />
               
               {/* 365 Pixel Grid - True Pixel Art Style */}
-              <div className="relative flex flex-wrap gap-[2px] md:gap-[2.5px] justify-center" style={{ width: '100%' }}>
+              <div className="relative flex flex-wrap gap-[1px] md:gap-[1.5px] justify-center" style={{ width: '100%' }}>
                 {daysArray.map((day, index) => {
                   const isToday = index === todayIndex;
                   const hasData = day !== null && day.moodValue !== null;
@@ -157,8 +157,8 @@ export function MoodGrid() {
                       onMouseEnter={() => setHoveredDay(index)}
                       onMouseLeave={() => setHoveredDay(null)}
                       style={{
-                        width: 'calc((100% - 12px) / 7)',
-                        maxWidth: 'calc((100% - 12px) / 7)',
+                        width: 'calc((100% - 6px) / 7)',
+                        maxWidth: 'calc((100% - 6px) / 7)',
                         aspectRatio: '1',
                       }}
                     >
@@ -232,7 +232,7 @@ export function MoodGrid() {
               </div>
               
               {/* Grid info */}
-              <div className="mt-6 text-center">
+              <div className="mt-3 text-center">
                 <p className="text-xs text-white/50 font-light tracking-wide">
                   365 days • {moodData.size} logged
                 </p>
@@ -242,7 +242,7 @@ export function MoodGrid() {
         </div>
 
         {/* Footer Text */}
-        <p className="text-xs md:text-sm text-center text-white/50 font-light tracking-wide mb-6">
+        <p className="text-xs md:text-sm text-center text-white/50 font-light tracking-wide mb-4">
           Each square represents a day. Log your mood daily to build your on-chain journal.
         </p>
 
