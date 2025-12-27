@@ -58,12 +58,15 @@ export function MoodSelector() {
     if (isConfirmed) {
       setShowSuccessMessage(true);
       // Dispatch custom event to notify MoodGrid to refresh
-      window.dispatchEvent(new CustomEvent("moodTransactionSuccess"));
+      // Use a small delay to ensure transaction is fully processed
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent("moodTransactionSuccess"));
+      }, 500);
       
-      // Clear success message after 10 seconds
+      // Clear success message after 15 seconds
       const timer = setTimeout(() => {
         setShowSuccessMessage(false);
-      }, 10000);
+      }, 15000);
       return () => clearTimeout(timer);
     }
   }, [isConfirmed]);
