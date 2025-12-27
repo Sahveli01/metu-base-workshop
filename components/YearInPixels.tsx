@@ -87,24 +87,25 @@ export function YearInPixels({
           )}
         </div>
 
-        {/* Grid Container - NFT Style Frame */}
+        {/* NFT Pixel Art Grid - Completely New Approach */}
         <div className="relative mb-6 flex justify-center w-full">
-          <div className="relative w-full max-w-3xl mx-auto">
-            <div className="relative inline-block w-full p-8 md:p-10 bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm border-2 border-white/20 rounded-2xl shadow-2xl shadow-black/30">
-              {/* Outer glow effect */}
-              <div className="absolute -inset-2 bg-gradient-to-br from-purple-500/15 via-blue-500/15 to-transparent rounded-2xl blur-2xl -z-10" />
+          <div className="relative w-full max-w-2xl mx-auto">
+            {/* NFT Frame Container */}
+            <div className="relative p-6 md:p-8 bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm border-2 border-white/25 rounded-2xl shadow-2xl shadow-black/40">
+              {/* Outer glow */}
+              <div className="absolute -inset-3 bg-gradient-to-br from-purple-500/20 via-blue-500/20 to-transparent rounded-2xl blur-2xl -z-10" />
               
-              {/* Decorative corner accents - NFT style */}
-              <div className="absolute top-4 left-4 w-5 h-5 border-t-2 border-l-2 border-white/30 rounded-tl" />
-              <div className="absolute top-4 right-4 w-5 h-5 border-t-2 border-r-2 border-white/30 rounded-tr" />
-              <div className="absolute bottom-4 left-4 w-5 h-5 border-b-2 border-l-2 border-white/30 rounded-bl" />
-              <div className="absolute bottom-4 right-4 w-5 h-5 border-b-2 border-r-2 border-white/30 rounded-br" />
+              {/* Corner decorations */}
+              <div className="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-white/40 rounded-tl" />
+              <div className="absolute top-3 right-3 w-6 h-6 border-t-2 border-r-2 border-white/40 rounded-tr" />
+              <div className="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-white/40 rounded-bl" />
+              <div className="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-white/40 rounded-br" />
               
-              {/* Subtle inner border */}
-              <div className="absolute inset-4 border border-white/10 rounded-lg pointer-events-none" />
+              {/* Inner border */}
+              <div className="absolute inset-4 border border-white/15 rounded-lg pointer-events-none" />
               
-              {/* Pixel Grid - 7 columns (weeks), 53 rows (days) = 365 squares - NFT Style */}
-              <div className="grid grid-cols-7 gap-[3px] md:gap-[4px] relative mx-auto justify-center" style={{ width: 'fit-content', maxWidth: '100%' }}>
+              {/* Pixel Grid Container - Using flexbox wrap for true pixel art */}
+              <div className="relative flex flex-wrap gap-[2px] md:gap-[2.5px] justify-center" style={{ width: '100%' }}>
                 {daysArray.map((day, index) => {
                   const isToday = index === todayIndex;
                   const hasData = day !== null;
@@ -113,67 +114,89 @@ export function YearInPixels({
                   return (
                     <div
                       key={index}
-                      className={`
-                        aspect-square w-9 h-9 md:w-11 md:h-11
-                        transition-all duration-200 cursor-pointer relative
-                        ${hasData ? 'border-2 border-black/40' : 'bg-slate-700/90 border-2 border-slate-600/80'}
-                        ${isToday ? 'ring-2 ring-offset-1 ring-offset-slate-800 ring-white/90 shadow-[0_0_12px_currentColor,0_0_24px_currentColor]' : ''}
-                        ${isHovered ? 'scale-150 z-30 shadow-2xl' : 'hover:scale-125 hover:z-20'}
-                      `}
-                      style={{
-                        backgroundColor: hasData ? day.color : undefined,
-                        color: hasData ? day.color : undefined,
-                        boxShadow: isToday && hasData
-                          ? `0 0 12px ${day.color}, 0 0 24px ${day.color}CC, 0 0 36px ${day.color}80, inset 0 0 8px ${day.color}80`
-                          : isToday
-                          ? '0 0 12px rgba(255, 255, 255, 0.6), 0 0 24px rgba(255, 255, 255, 0.4)'
-                          : hasData
-                          ? `inset 0 0 4px ${day.color}40, 0 2px 4px rgba(0,0,0,0.3)`
-                          : undefined,
-                      }}
+                      className="relative group"
                       onMouseEnter={() => handleDayHover(index)}
                       onMouseLeave={handleDayLeave}
-                      title={day ? `${day.date} ${day.emoji}` : undefined}
+                      style={{
+                        width: 'calc((100% - 12px) / 7)',
+                        maxWidth: 'calc((100% - 12px) / 7)',
+                        aspectRatio: '1',
+                      }}
                     >
-                      {/* Tooltip for this day */}
+                      {/* Pixel Square */}
+                      <div
+                        className={`
+                          w-full h-full
+                          transition-all duration-150 cursor-pointer
+                          ${hasData ? '' : 'bg-slate-700/80 border border-slate-600/70'}
+                          ${isToday ? 'ring-2 ring-white/90 ring-offset-1 ring-offset-slate-800' : ''}
+                          ${isHovered ? 'scale-150 z-30' : 'hover:scale-125 hover:z-20'}
+                        `}
+                        style={{
+                          backgroundColor: hasData ? day.color : undefined,
+                          boxShadow: isToday && hasData
+                            ? `0 0 8px ${day.color}, 0 0 16px ${day.color}CC, inset 0 0 4px ${day.color}80`
+                            : isToday
+                            ? '0 0 8px rgba(255, 255, 255, 0.6), 0 0 16px rgba(255, 255, 255, 0.4)'
+                            : hasData
+                            ? `inset 0 0 2px ${day.color}30, 0 1px 2px rgba(0,0,0,0.4)`
+                            : undefined,
+                          border: hasData ? `1px solid ${day.color}40` : undefined,
+                        }}
+                      >
+                        {/* Pixel art depth effect */}
+                        {hasData && (
+                          <>
+                            {/* Top highlight */}
+                            <div 
+                              className="absolute top-0 left-0 right-0 h-[30%] opacity-40"
+                              style={{
+                                background: `linear-gradient(to bottom, ${day.color}CC, transparent)`,
+                              }}
+                            />
+                            {/* Left highlight */}
+                            <div 
+                              className="absolute top-0 left-0 bottom-0 w-[30%] opacity-40"
+                              style={{
+                                background: `linear-gradient(to right, ${day.color}CC, transparent)`,
+                              }}
+                            />
+                            {/* Bottom shadow */}
+                            <div 
+                              className="absolute bottom-0 left-0 right-0 h-[30%] opacity-30"
+                              style={{
+                                background: `linear-gradient(to top, rgba(0,0,0,0.4), transparent)`,
+                              }}
+                            />
+                            {/* Right shadow */}
+                            <div 
+                              className="absolute top-0 right-0 bottom-0 w-[30%] opacity-30"
+                              style={{
+                                background: `linear-gradient(to left, rgba(0,0,0,0.4), transparent)`,
+                              }}
+                            />
+                          </>
+                        )}
+                      </div>
+                      
+                      {/* Tooltip */}
                       {isHovered && day && (
-                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 z-50 px-3 py-2 bg-slate-900/98 backdrop-blur-md border border-white/30 rounded-lg shadow-2xl pointer-events-none whitespace-nowrap">
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50 px-3 py-2 bg-slate-900/98 backdrop-blur-md border border-white/30 rounded-lg shadow-2xl pointer-events-none whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <span className="text-lg">{day.emoji}</span>
                             <span className="text-xs font-medium text-white/95">
                               {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                             </span>
                           </div>
-                          {/* Tooltip arrow */}
                           <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-px w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-transparent border-t-white/30" />
                         </div>
-                      )}
-                      
-                      {/* Subtle inner glow for filled days */}
-                      {hasData && !isToday && (
-                        <div 
-                          className="absolute inset-0 opacity-50"
-                          style={{
-                            background: `radial-gradient(circle at center, ${day.color}80, transparent 70%)`,
-                          }}
-                        />
-                      )}
-                      
-                      {/* Pixel art style inner highlight */}
-                      {hasData && (
-                        <div 
-                          className="absolute top-0 left-0 w-1/2 h-1/2 opacity-30"
-                          style={{
-                            background: `linear-gradient(135deg, ${day.color}CC, transparent)`,
-                          }}
-                        />
                       )}
                     </div>
                   );
                 })}
               </div>
               
-              {/* Grid info text */}
+              {/* Grid info */}
               <div className="mt-6 text-center">
                 <p className="text-xs text-white/50 font-light tracking-wide">
                   365 days • {dailyMoods.filter(m => m.isMinted).length} minted
