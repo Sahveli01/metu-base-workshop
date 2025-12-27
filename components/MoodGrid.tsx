@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useMemo } from "react";
 import { useAccount } from "wagmi";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { MOOD_OPTIONS, getDayIndex, BASELOG_CONTRACT_ADDRESS } from "@/lib/contract";
 
 interface DayData {
@@ -13,10 +14,14 @@ interface DayData {
 
 export function MoodGrid() {
   const { address } = useAccount();
+  const { context } = useMiniKit();
   const [hoveredDay, setHoveredDay] = useState<number | null>(null);
   const [pendingMood, setPendingMood] = useState<number | null>(null);
   const [moodData, setMoodData] = useState<Map<number, DayData>>(new Map());
   const gridRef = useRef<HTMLDivElement>(null);
+  
+  // Try to get address from MiniKit context if wagmi address is not available
+  const effectiveAddress = address || context?.user?.custodyAddress;
 
   // Get today's index
   const todayIndex = useMemo(() => getDayIndex(), []);
@@ -101,7 +106,7 @@ export function MoodGrid() {
     };
   }, [moodData, todayIndex]);
 
-  if (!address) {
+  if (!effectiveAddress) {
     return (
       <div className="relative backdrop-blur-xl bg-gradient-to-br from-slate-900/80 via-slate-800/70 to-slate-900/80 rounded-3xl p-8 md:p-10 border border-white/10 shadow-2xl animate-fade-in">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 rounded-3xl pointer-events-none" />
@@ -297,9 +302,9 @@ export function MoodGrid() {
 
           <button
             onClick={() => {
-              if (address) {
+              if (effectiveAddress) {
                 // Create Farcaster share link with NFT preview
-                const nftPreviewUrl = `${window.location.origin}?address=${address}`;
+                const nftPreviewUrl = `${window.location.origin}?address=${effectiveAddress}`;
                 const shareText = `Check out my Year in Pixels NFT on ONPIXEL! 🎨✨\n\n${nftPreviewUrl}`;
                 const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(shareText)}`;
                 window.open(farcasterUrl, '_blank');
