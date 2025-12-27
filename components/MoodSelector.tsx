@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useConnect, useChainId, useSwitchChain } from "wagmi";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
-import { useConnectModal } from "@coinbase/onchainkit/wallet";
 import { BASELOG_ABI, BASELOG_CONTRACT_ADDRESS, MOOD_OPTIONS, getDayIndex } from "@/lib/contract";
 
 export function MoodSelector() {
@@ -12,7 +11,6 @@ export function MoodSelector() {
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
   const { context, isFrameReady } = useMiniKit();
-  const { openConnectModal } = useConnectModal();
   
   // Try to get address from MiniKit context if wagmi address is not available
   // MiniKit context doesn't have custodyAddress, so we'll use wagmi address only
@@ -21,26 +19,29 @@ export function MoodSelector() {
   // Auto-connect on mount if in MiniApp
   useEffect(() => {
     if (!address && context && isFrameReady && connectors && connectors.length > 0) {
-      // Try to auto-connect after a short delay
+      // Try to auto-connect after a short delay to ensure frame is ready
       const timer = setTimeout(() => {
-        // Find MiniApp connector
-        const miniappConnector = connectors.find(c => 
-          c.id === 'farcaster' || 
-          c.id === 'miniapp' || 
-          c.name?.toLowerCase().includes('farcaster') ||
-          c.name?.toLowerCase().includes('miniapp')
-        );
+        // Find MiniApp/Farcaster connector
+        const miniappConnector = connectors.find(c => {
+          const id = c.id?.toLowerCase() || '';
+          const name = c.name?.toLowerCase() || '';
+          return id.includes('farcaster') || 
+                 id.includes('miniapp') || 
+                 name.includes('farcaster') ||
+                 name.includes('miniapp');
+        });
         
         if (miniappConnector) {
           connect({ connector: miniappConnector }).catch(() => {
             // Silent fail, user can manually connect
           });
         } else if (connectors[0]) {
+          // Fallback to first available connector
           connect({ connector: connectors[0] }).catch(() => {
             // Silent fail, user can manually connect
           });
         }
-      }, 1000);
+      }, 1500);
       
       return () => clearTimeout(timer);
     }
@@ -147,24 +148,34 @@ export function MoodSelector() {
                 Please connect your wallet to log your mood
               </p>
               <button
-                onClick={() => {
-                  // Use OnchainKit's connect modal for better MiniApp support
-                  if (openConnectModal) {
-                    openConnectModal();
-                  } else {
-                    // Fallback to manual connector selection
-                    const miniappConnector = connectors?.find(c => 
-                      c.id === 'farcaster' || 
-                      c.id === 'miniapp' || 
-                      c.name?.toLowerCase().includes('farcaster') ||
-                      c.name?.toLowerCase().includes('miniapp')
-                    );
+                onClick={async () => {
+                  try {
+                    // Find MiniApp/Farcaster connector first
+                    const miniappConnector = connectors?.find(c => {
+                      const id = c.id?.toLowerCase() || '';
+                      const name = c.name?.toLowerCase() || '';
+                      return id.includes('farcaster') || 
+                             id.includes('miniapp') || 
+                             name.includes('farcaster') ||
+                             name.includes('miniapp');
+                    });
+                    
                     const connectorToUse = miniappConnector || connectors?.[0];
                     
                     if (connectorToUse) {
-                      connect({ connector: connectorToUse }).catch(console.error);
+                      await connect({ connector: connectorToUse });
                     } else if (connectors && connectors.length > 0) {
-                      connect({ connector: connectors[0] }).catch(console.error);
+                      await connect({ connector: connectors[0] });
+                    }
+                  } catch (error) {
+                    console.error("Failed to connect wallet:", error);
+                    // Try to connect with any available connector as last resort
+                    if (connectors && connectors.length > 0) {
+                      try {
+                        await connect({ connector: connectors[0] });
+                      } catch (e) {
+                        console.error("All connection attempts failed:", e);
+                      }
                     }
                   }
                 }}
