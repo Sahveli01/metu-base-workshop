@@ -45,7 +45,7 @@ export const BASELOG_ABI = [
 
 // Contract address (Base Sepolia deployment)
 export const BASELOG_CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ||
-  "0x724ffdb284A0645a5F60EA4123D6111644d16595") as Address;
+  "0x031dc5F3D62Cf6Fcb50a9cbFd43110b304953F3E") as Address;
 
 // Mood options with colors
 export const MOOD_OPTIONS = [
