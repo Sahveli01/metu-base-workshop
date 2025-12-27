@@ -87,53 +87,106 @@ export function YearInPixels({
           )}
         </div>
 
-        {/* Grid Container */}
-        <div className="relative mb-6">
-          <div className="grid grid-cols-7 gap-1 md:gap-1.5 justify-center max-w-full overflow-x-auto pb-2">
-            {daysArray.map((day, index) => {
-              const isToday = index === todayIndex;
-              const hasData = day !== null;
-              const isHovered = hoveredDay === index;
+        {/* Grid Container - NFT Style Frame */}
+        <div className="relative mb-6 flex justify-center">
+          <div className="relative inline-block p-5 md:p-7 bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border-2 border-white/15 rounded-2xl shadow-2xl shadow-black/20">
+            {/* Outer glow effect */}
+            <div className="absolute -inset-1 bg-gradient-to-br from-purple-500/10 via-blue-500/10 to-transparent rounded-2xl blur-xl -z-10" />
+            
+            {/* Decorative corner accents - NFT style */}
+            <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-white/25 rounded-tl" />
+            <div className="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-white/25 rounded-tr" />
+            <div className="absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 border-white/25 rounded-bl" />
+            <div className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-white/25 rounded-br" />
+            
+            {/* Subtle inner border */}
+            <div className="absolute inset-3 border border-white/5 rounded-lg pointer-events-none" />
+            
+            {/* Pixel Grid - 7 columns for weeks, ~52 rows for days */}
+            <div className="grid grid-cols-7 gap-[2.5px] md:gap-[3px] relative p-1">
+              {daysArray.map((day, index) => {
+                const isToday = index === todayIndex;
+                const hasData = day !== null;
+                const isHovered = hoveredDay === index;
 
-              return (
-                <div
-                  key={index}
-                  className={`
-                    aspect-square w-full min-w-[8px] md:min-w-[10px] 
-                    rounded-sm transition-all duration-200 cursor-pointer relative
-                    ${hasData ? '' : 'bg-slate-700/30 border border-slate-600/20'}
-                    ${isToday ? 'ring-2 ring-offset-2 ring-offset-slate-900 ring-white/50 shadow-lg shadow-white/20' : ''}
-                    ${isHovered ? 'scale-110 z-10' : 'hover:scale-105'}
-                  `}
-                  style={{
-                    backgroundColor: hasData ? day.color : undefined,
-                    boxShadow: isToday 
-                      ? `0 0 12px ${hasData ? day.color : 'rgba(255, 255, 255, 0.3)'}, 0 0 24px ${hasData ? day.color + '40' : 'rgba(255, 255, 255, 0.1)'}`
-                      : undefined,
-                  }}
-                  onMouseEnter={() => handleDayHover(index)}
-                  onMouseLeave={handleDayLeave}
-                >
-                  {/* Tooltip for this day */}
-                  {isHovered && day && (
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50 px-3 py-2 bg-slate-800/95 backdrop-blur-md border border-white/20 rounded-lg shadow-xl pointer-events-none whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{day.emoji}</span>
-                        <span className="text-xs font-medium text-white/90">
-                          {day.date}
-                        </span>
+                return (
+                  <div
+                    key={index}
+                    className={`
+                      aspect-square w-3.5 h-3.5 md:w-4.5 md:h-4.5
+                      transition-all duration-200 cursor-pointer relative
+                      ${hasData ? 'border border-black/15 shadow-sm' : 'bg-slate-700/50 border border-slate-600/40'}
+                      ${isToday ? 'ring-2 ring-offset-1 ring-offset-slate-800 ring-white/70 shadow-[0_0_10px_currentColor,0_0_20px_currentColor]' : ''}
+                      ${isHovered ? 'scale-150 z-30 shadow-xl' : 'hover:scale-125 hover:z-20'}
+                    `}
+                    style={{
+                      backgroundColor: hasData ? day.color : undefined,
+                      color: hasData ? day.color : undefined,
+                      boxShadow: isToday && hasData
+                        ? `0 0 10px ${day.color}, 0 0 20px ${day.color}90, 0 0 30px ${day.color}50, inset 0 0 6px ${day.color}60`
+                        : isToday
+                        ? '0 0 10px rgba(255, 255, 255, 0.5), 0 0 20px rgba(255, 255, 255, 0.3)'
+                        : hasData
+                        ? `inset 0 0 3px ${day.color}30, 0 1px 2px rgba(0,0,0,0.2)`
+                        : undefined,
+                    }}
+                    onMouseEnter={() => handleDayHover(index)}
+                    onMouseLeave={handleDayLeave}
+                    title={day ? `${day.date} ${day.emoji}` : undefined}
+                  >
+                    {/* Tooltip for this day */}
+                    {isHovered && day && (
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 z-50 px-3 py-2 bg-slate-900/98 backdrop-blur-md border border-white/30 rounded-lg shadow-2xl pointer-events-none whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{day.emoji}</span>
+                          <span className="text-xs font-medium text-white/95">
+                            {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </span>
+                        </div>
+                        {/* Tooltip arrow */}
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-px w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-transparent border-t-white/30" />
                       </div>
-                      {/* Tooltip arrow */}
-                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-px w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white/20" />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                    )}
+                    
+                    {/* Subtle inner glow for filled days */}
+                    {hasData && !isToday && (
+                      <div 
+                        className="absolute inset-0 opacity-40"
+                        style={{
+                          background: `radial-gradient(circle at center, ${day.color}60, transparent 60%)`,
+                        }}
+                      />
+                    )}
+                    
+                    {/* Pixel art style inner highlight */}
+                    {hasData && (
+                      <div 
+                        className="absolute top-0 left-0 w-1/2 h-1/2 opacity-20"
+                        style={{
+                          background: `linear-gradient(135deg, ${day.color}80, transparent)`,
+                        }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Grid info text */}
+            <div className="mt-5 text-center">
+              <p className="text-xs text-white/40 font-light tracking-wide">
+                365 days • {dailyMoods.filter(m => m.isMinted).length} minted
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Footer Text */}
+        <p className="text-xs md:text-sm text-center text-white/50 font-light tracking-wide mb-6">
+          Each square represents a day. Log your mood daily to build your on-chain journal.
+        </p>
+
+        {/* Action Buttons */}
         <div className="flex flex-col gap-4">
           {/* Mint Button */}
           <div className="flex flex-col items-center gap-2">
