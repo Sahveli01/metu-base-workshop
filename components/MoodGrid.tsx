@@ -147,7 +147,7 @@ export function MoodGrid() {
               <div className="relative flex flex-wrap gap-[2px] md:gap-[2.5px] justify-center" style={{ width: '100%' }}>
                 {daysArray.map((day, index) => {
                   const isToday = index === todayIndex;
-                  const hasData = day.moodValue !== null;
+                  const hasData = day !== null && day.moodValue !== null;
                   const isHovered = hoveredDay === index;
 
                   return (
@@ -172,19 +172,19 @@ export function MoodGrid() {
                           ${isHovered ? 'scale-150 z-30' : 'hover:scale-125 hover:z-20'}
                         `}
                         style={{
-                          backgroundColor: hasData ? day.color : undefined,
-                          boxShadow: isToday && hasData
+                          backgroundColor: hasData && day ? day.color : undefined,
+                          boxShadow: isToday && hasData && day
                             ? `0 0 8px ${day.color}, 0 0 16px ${day.color}CC, inset 0 0 4px ${day.color}80`
                             : isToday
                             ? '0 0 8px rgba(255, 255, 255, 0.6), 0 0 16px rgba(255, 255, 255, 0.4)'
-                            : hasData
+                            : hasData && day
                             ? `inset 0 0 2px ${day.color}30, 0 1px 2px rgba(0,0,0,0.4)`
                             : undefined,
-                          border: hasData ? `1px solid ${day.color}40` : undefined,
+                          border: hasData && day ? `1px solid ${day.color}40` : undefined,
                         }}
                       >
                         {/* Pixel art 3D effect */}
-                        {hasData && (
+                        {hasData && day && (
                           <>
                             <div 
                               className="absolute top-0 left-0 right-0 h-[30%] opacity-40"
@@ -215,7 +215,7 @@ export function MoodGrid() {
                       </div>
                       
                       {/* Tooltip */}
-                      {isHovered && hasData && (
+                      {isHovered && hasData && day && (
                         <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50 px-3 py-2 bg-slate-900/98 backdrop-blur-md border border-white/30 rounded-lg shadow-2xl pointer-events-none whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <span className="text-lg">{day.emoji}</span>
