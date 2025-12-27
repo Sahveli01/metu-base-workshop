@@ -53,23 +53,26 @@ export function MoodSelector() {
 
   const isProcessing = isPending || isConfirming;
 
-  // When transaction is confirmed, dispatch event to trigger grid refresh
+  // When transaction is confirmed, dispatch event with mood value
   useEffect(() => {
-    if (isConfirmed) {
+    if (isConfirmed && selectedMood !== null) {
       setShowSuccessMessage(true);
-      // Dispatch custom event to notify MoodGrid to refresh
-      // Use a small delay to ensure transaction is fully processed
+      
+      // Dispatch custom event with mood value to notify MoodGrid
       setTimeout(() => {
-        window.dispatchEvent(new CustomEvent("moodTransactionSuccess"));
-      }, 500);
+        window.dispatchEvent(new CustomEvent("moodTransactionSuccess", {
+          detail: { moodValue: selectedMood }
+        }));
+      }, 300);
       
       // Clear success message after 15 seconds
       const timer = setTimeout(() => {
         setShowSuccessMessage(false);
+        setSelectedMood(null);
       }, 15000);
       return () => clearTimeout(timer);
     }
-  }, [isConfirmed]);
+  }, [isConfirmed, selectedMood]);
 
   return (
     <div className="mood-selector">
@@ -146,7 +149,7 @@ export function MoodSelector() {
 
       {(isConfirmed || showSuccessMessage) && (
         <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm text-center">
-          ✓ Mood logged successfully! Your grid will update shortly.
+          ✓ Mood logged successfully! View your updated grid above.
         </div>
       )}
     </div>
