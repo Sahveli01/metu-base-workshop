@@ -25,7 +25,7 @@ export default function Home() {
     <div className={styles.container}>
       <div className={styles.content}>
         <div className={styles.header}>
-          <h1 className={styles.title}>BaseLog</h1>
+          <h1 className={styles.title}>ONPIXEL</h1>
           <p className={styles.subtitle}>
             Your on-chain mood journal
             {context?.user?.displayName && (

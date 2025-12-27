@@ -15,7 +15,7 @@ export const minikitConfig = {
   },
   miniapp: {
     version: "1",
-    name: "BaseLog",
+    name: "ONPIXEL",
     subtitle: "Your On-Chain Mood Journal",
     description: "Log your daily mood and build a beautiful Year in Pixels NFT stored entirely on-chain. Each day becomes a colored pixel in your soulbound NFT.",
     screenshotUrls: [`${ROOT_URL}/screenshot-portrait.png`],
@@ -28,7 +28,7 @@ export const minikitConfig = {
     tags: ["mood", "journal", "nft", "soulbound", "onchain", "base"],
     heroImageUrl: `${ROOT_URL}/hero.png`,
     tagline: "Your year, one pixel at a time",
-    ogTitle: "BaseLog - On-Chain Mood Journal",
+    ogTitle: "ONPIXEL - On-Chain Mood Journal",
     ogDescription: "Log your daily mood and build a beautiful Year in Pixels NFT stored entirely on-chain.",
     ogImageUrl: `${ROOT_URL}/hero.png`,
   },

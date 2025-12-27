@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useMemo } from "react";
 import { useAccount } from "wagmi";
-import { MOOD_OPTIONS, getDayIndex } from "@/lib/contract";
+import { MOOD_OPTIONS, getDayIndex, BASELOG_CONTRACT_ADDRESS } from "@/lib/contract";
 
 interface DayData {
   date: string;
@@ -20,6 +20,22 @@ export function MoodGrid() {
 
   // Get today's index
   const todayIndex = useMemo(() => getDayIndex(), []);
+  
+  // Check if year is complete (must wait until end of year)
+  const isYearComplete = useMemo(() => {
+    const today = new Date();
+    const endOfYear = new Date(today.getFullYear(), 11, 31, 23, 59, 59);
+    return today >= endOfYear;
+  }, []);
+  
+  // Calculate days remaining until end of year
+  const daysRemaining = useMemo(() => {
+    const today = new Date();
+    const endOfYear = new Date(today.getFullYear(), 11, 31, 23, 59, 59);
+    const diffTime = endOfYear.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return Math.max(0, diffDays);
+  }, []);
 
   // Generate 365 days array with data
   const daysArray = useMemo(() => {
@@ -251,21 +267,46 @@ export function MoodGrid() {
         {/* Action Buttons */}
         <div className="flex flex-col gap-4">
           <div className="flex flex-col items-center gap-2">
-            <button
-              onClick={() => console.log("Mint clicked")}
-              className="group relative w-full px-6 py-3 bg-white text-slate-900 font-medium rounded-xl hover:bg-white/90 transition-all duration-200 shadow-lg hover:shadow-xl active:scale-[0.98] overflow-hidden"
-            >
-              <span className="relative z-10">Mint Your Year in Pixels NFT</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-            </button>
+            {!isYearComplete ? (
+              <div className="w-full">
+                <button
+                  disabled
+                  className="group relative w-full px-6 py-3 bg-slate-700/50 text-slate-400 font-medium rounded-xl cursor-not-allowed transition-all duration-200 shadow-lg overflow-hidden opacity-60"
+                >
+                  <span className="relative z-10">Mint Your Year in Pixels NFT</span>
+                </button>
+                <div className="mt-2 p-3 backdrop-blur-md bg-amber-500/10 border border-amber-400/30 rounded-lg text-amber-300/90 text-xs text-center animate-slide-in-top">
+                  <span className="inline-block mr-1">⏳</span>
+                  Minting requires a full year of data. {daysRemaining > 0 ? `${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} remaining until you can mint.` : 'Complete the year to mint your NFT.'}
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => console.log("Mint clicked")}
+                className="group relative w-full px-6 py-3 bg-white text-slate-900 font-medium rounded-xl hover:bg-white/90 transition-all duration-200 shadow-lg hover:shadow-xl active:scale-[0.98] overflow-hidden"
+              >
+                <span className="relative z-10">Mint Your Year in Pixels NFT</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+              </button>
+            )}
             <p className="text-xs text-gray-400 font-light">
               Soulbound NFT (Non-transferable)
             </p>
           </div>
 
           <button
-            onClick={() => console.log("Share clicked")}
+            onClick={() => {
+              if (address) {
+                // Create Farcaster share link with NFT preview
+                const nftPreviewUrl = `${window.location.origin}?address=${address}`;
+                const shareText = `Check out my Year in Pixels NFT on ONPIXEL! 🎨✨\n\n${nftPreviewUrl}`;
+                const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(shareText)}`;
+                window.open(farcasterUrl, '_blank');
+              } else {
+                console.log("Connect wallet to share");
+              }
+            }}
             className="group relative w-full px-6 py-3 border-2 border-white/20 text-white font-medium rounded-xl hover:border-white/30 hover:bg-white/5 transition-all duration-200 active:scale-[0.98] overflow-hidden"
           >
             <span className="relative z-10">Share on Farcaster</span>
