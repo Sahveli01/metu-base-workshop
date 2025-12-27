@@ -90,83 +90,123 @@ export function MoodSelector() {
   }, [showSuccessMessage]);
 
   return (
-    <div className="mood-selector">
-      <h2 className="text-2xl font-semibold mb-4 text-center text-gray-900">
-        How was your day?
-      </h2>
-      
-      {!address && (
-        <div className="flex flex-col items-center mb-6">
-          <p className="text-gray-500 mb-3">Please connect your wallet to log your mood</p>
-          <button
-            onClick={() => {
-              if (connectors && connectors.length > 0) {
-                connect({ connector: connectors[0] });
-              }
-            }}
-            className="bg-blue-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-blue-700 transition-colors shadow-md"
-          >
-            Connect Wallet
-          </button>
-        </div>
-      )}
+    <div className="mood-selector w-full">
+      {/* Glassmorphism Card Container */}
+      <div className="relative backdrop-blur-xl bg-gradient-to-br from-slate-900/80 via-slate-800/70 to-slate-900/80 rounded-3xl p-6 md:p-8 border border-white/10 shadow-2xl animate-fade-in">
+        {/* Subtle gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 rounded-3xl pointer-events-none" />
+        
+        {/* Content */}
+        <div className="relative z-10">
+          {/* Title */}
+          <h2 className="text-2xl md:text-3xl font-light mb-8 text-center text-white/95 tracking-tight">
+            How was your day?
+          </h2>
+          
+          {/* Wallet Connection State */}
+          {!address && (
+            <div className="flex flex-col items-center mb-8 animate-slide-in-bottom">
+              <p className="text-white/60 mb-6 text-sm md:text-base font-light tracking-wide">
+                Please connect your wallet to log your mood
+              </p>
+              <button
+                onClick={() => {
+                  if (connectors && connectors.length > 0) {
+                    connect({ connector: connectors[0] });
+                  }
+                }}
+                className="group relative px-8 py-3.5 rounded-2xl font-medium text-white bg-gradient-to-r from-purple-600/90 to-blue-600/90 hover:from-purple-500 hover:to-blue-500 transition-all duration-300 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 hover:scale-[1.02] active:scale-[0.98] backdrop-blur-sm border border-white/20"
+              >
+                <span className="relative z-10">Connect Wallet</span>
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              </button>
+            </div>
+          )}
 
-      {address && chainId !== 84532 && (
-        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-amber-800 text-sm text-center">
-          ⚠️ Please switch to Base Sepolia network to log your mood
-          <button
-            onClick={() => switchChain({ chainId: 84532 })}
-            className="ml-2 underline font-semibold text-amber-900 hover:text-amber-950"
-          >
-            Switch Network
-          </button>
-        </div>
-      )}
+          {/* Network Warning */}
+          {address && chainId !== 84532 && (
+            <div className="mb-6 p-4 backdrop-blur-md bg-amber-500/10 border border-amber-400/30 rounded-2xl text-amber-300/90 text-sm text-center animate-slide-in-top">
+              <span className="inline-block mb-2">⚠️</span> Please switch to Base Sepolia network to log your mood
+              <button
+                onClick={() => switchChain({ chainId: 84532 })}
+                className="ml-3 underline font-medium text-amber-200 hover:text-amber-100 transition-colors duration-200"
+              >
+                Switch Network
+              </button>
+            </div>
+          )}
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        {MOOD_OPTIONS.map((mood) => (
-          <button
-            key={mood.value}
-            onClick={() => handleMoodSelect(mood.value)}
-            disabled={!address || isProcessing}
-            className={`
-              relative p-4 rounded-xl transition-all duration-200
-              ${selectedMood === mood.value
-                ? "ring-4 ring-offset-2 ring-gray-300 scale-105"
-                : "hover:scale-105 hover:shadow-lg"
-              }
-              ${isProcessing ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
-            `}
-            style={{
-              backgroundColor: mood.color,
-              boxShadow: selectedMood === mood.value
-                ? `0 0 0 3px ${mood.color}40`
-                : "0 2px 8px rgba(0,0,0,0.1)",
-            }}
-          >
-            <div className="text-3xl mb-2">{mood.emoji}</div>
-            <div className="text-sm font-medium text-gray-700">{mood.label}</div>
-          </button>
-        ))}
+          {/* Mood Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            {MOOD_OPTIONS.map((mood, index) => (
+              <button
+                key={mood.value}
+                onClick={() => handleMoodSelect(mood.value)}
+                disabled={!address || isProcessing}
+                className={`
+                  group relative p-5 md:p-6 rounded-2xl transition-all duration-300 ease-out
+                  backdrop-blur-md border
+                  ${selectedMood === mood.value
+                    ? "scale-105 border-white/40 shadow-2xl shadow-current/30 ring-2 ring-white/20"
+                    : "border-white/10 hover:border-white/20 hover:scale-[1.03] hover:shadow-xl"
+                  }
+                  ${isProcessing ? "opacity-40 cursor-not-allowed" : "cursor-pointer active:scale-[0.97]"}
+                  opacity-0 animate-fade-in
+                `}
+                style={{
+                  animationDelay: `${index * 50}ms`,
+                  animationFillMode: 'forwards',
+                  backgroundColor: selectedMood === mood.value 
+                    ? `${mood.color}CC` 
+                    : `${mood.color}80`,
+                  boxShadow: selectedMood === mood.value
+                    ? `0 8px 32px ${mood.color}40, 0 0 0 1px ${mood.color}60`
+                    : "0 4px 16px rgba(0,0,0,0.2)",
+                }}
+              >
+                {/* Glow effect on selected */}
+                {selectedMood === mood.value && (
+                  <div 
+                    className="absolute inset-0 rounded-2xl opacity-50 blur-xl -z-10"
+                    style={{ backgroundColor: mood.color }}
+                  />
+                )}
+                
+                <div className="relative z-10 flex flex-col items-center justify-center">
+                  <div className="text-4xl md:text-5xl mb-2.5 transform transition-transform duration-300 group-hover:scale-110">
+                    {mood.emoji}
+                  </div>
+                  <div className="text-xs md:text-sm font-medium text-white/90 tracking-wide">
+                    {mood.label}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* Status Messages */}
+          {isPending && (
+            <div className="mt-6 p-4 backdrop-blur-md bg-blue-500/10 border border-blue-400/30 rounded-2xl text-blue-300/90 text-sm text-center animate-slide-in-bottom">
+              <span className="inline-block animate-spin mr-2">⏳</span>
+              Sending transaction...
+            </div>
+          )}
+
+          {hash && !isPending && (
+            <div className="mt-6 p-4 backdrop-blur-md bg-emerald-500/10 border border-emerald-400/30 rounded-2xl text-emerald-300/90 text-sm text-center animate-slide-in-bottom">
+              <span className="inline-block mr-2">✓</span>
+              Transaction sent! View your grid above. {isConfirming && <span className="text-emerald-200/70">(Confirming...)</span>}
+            </div>
+          )}
+
+          {writeError && (
+            <div className="mt-6 p-4 backdrop-blur-md bg-red-500/10 border border-red-400/30 rounded-2xl text-red-300/90 text-sm text-center animate-slide-in-bottom">
+              <span className="inline-block mr-2">✕</span>
+              Error: {writeError.message}
+            </div>
+          )}
+        </div>
       </div>
-
-      {isPending && (
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm text-center">
-          ⏳ Sending transaction...
-        </div>
-      )}
-
-      {hash && !isPending && (
-        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm text-center">
-          ✓ Transaction sent! View your grid above. {isConfirming && "(Confirming...)"}
-        </div>
-      )}
-
-      {writeError && (
-        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm text-center">
-          Error: {writeError.message}
-        </div>
-      )}
     </div>
   );
 }
