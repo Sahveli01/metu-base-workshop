@@ -88,95 +88,97 @@ export function YearInPixels({
         </div>
 
         {/* Grid Container - NFT Style Frame */}
-        <div className="relative mb-6 flex justify-center">
-          <div className="relative inline-block p-5 md:p-7 bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border-2 border-white/15 rounded-2xl shadow-2xl shadow-black/20">
-            {/* Outer glow effect */}
-            <div className="absolute -inset-1 bg-gradient-to-br from-purple-500/10 via-blue-500/10 to-transparent rounded-2xl blur-xl -z-10" />
-            
-            {/* Decorative corner accents - NFT style */}
-            <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-white/25 rounded-tl" />
-            <div className="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-white/25 rounded-tr" />
-            <div className="absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 border-white/25 rounded-bl" />
-            <div className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-white/25 rounded-br" />
-            
-            {/* Subtle inner border */}
-            <div className="absolute inset-3 border border-white/5 rounded-lg pointer-events-none" />
-            
-            {/* Pixel Grid - 7 columns for weeks, ~52 rows for days */}
-            <div className="grid grid-cols-7 gap-[2.5px] md:gap-[3px] relative p-1">
-              {daysArray.map((day, index) => {
-                const isToday = index === todayIndex;
-                const hasData = day !== null;
-                const isHovered = hoveredDay === index;
+        <div className="relative mb-6 flex justify-center w-full">
+          <div className="relative w-full max-w-3xl mx-auto">
+            <div className="relative inline-block w-full p-8 md:p-10 bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm border-2 border-white/20 rounded-2xl shadow-2xl shadow-black/30">
+              {/* Outer glow effect */}
+              <div className="absolute -inset-2 bg-gradient-to-br from-purple-500/15 via-blue-500/15 to-transparent rounded-2xl blur-2xl -z-10" />
+              
+              {/* Decorative corner accents - NFT style */}
+              <div className="absolute top-4 left-4 w-5 h-5 border-t-2 border-l-2 border-white/30 rounded-tl" />
+              <div className="absolute top-4 right-4 w-5 h-5 border-t-2 border-r-2 border-white/30 rounded-tr" />
+              <div className="absolute bottom-4 left-4 w-5 h-5 border-b-2 border-l-2 border-white/30 rounded-bl" />
+              <div className="absolute bottom-4 right-4 w-5 h-5 border-b-2 border-r-2 border-white/30 rounded-br" />
+              
+              {/* Subtle inner border */}
+              <div className="absolute inset-4 border border-white/10 rounded-lg pointer-events-none" />
+              
+              {/* Pixel Grid - 7 columns (weeks), 53 rows (days) = 365 squares - NFT Style */}
+              <div className="grid grid-cols-7 gap-[3px] md:gap-[4px] relative mx-auto justify-center" style={{ width: 'fit-content', maxWidth: '100%' }}>
+                {daysArray.map((day, index) => {
+                  const isToday = index === todayIndex;
+                  const hasData = day !== null;
+                  const isHovered = hoveredDay === index;
 
-                return (
-                  <div
-                    key={index}
-                    className={`
-                      aspect-square w-3.5 h-3.5 md:w-4.5 md:h-4.5
-                      transition-all duration-200 cursor-pointer relative
-                      ${hasData ? 'border border-black/15 shadow-sm' : 'bg-slate-700/50 border border-slate-600/40'}
-                      ${isToday ? 'ring-2 ring-offset-1 ring-offset-slate-800 ring-white/70 shadow-[0_0_10px_currentColor,0_0_20px_currentColor]' : ''}
-                      ${isHovered ? 'scale-150 z-30 shadow-xl' : 'hover:scale-125 hover:z-20'}
-                    `}
-                    style={{
-                      backgroundColor: hasData ? day.color : undefined,
-                      color: hasData ? day.color : undefined,
-                      boxShadow: isToday && hasData
-                        ? `0 0 10px ${day.color}, 0 0 20px ${day.color}90, 0 0 30px ${day.color}50, inset 0 0 6px ${day.color}60`
-                        : isToday
-                        ? '0 0 10px rgba(255, 255, 255, 0.5), 0 0 20px rgba(255, 255, 255, 0.3)'
-                        : hasData
-                        ? `inset 0 0 3px ${day.color}30, 0 1px 2px rgba(0,0,0,0.2)`
-                        : undefined,
-                    }}
-                    onMouseEnter={() => handleDayHover(index)}
-                    onMouseLeave={handleDayLeave}
-                    title={day ? `${day.date} ${day.emoji}` : undefined}
-                  >
-                    {/* Tooltip for this day */}
-                    {isHovered && day && (
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 z-50 px-3 py-2 bg-slate-900/98 backdrop-blur-md border border-white/30 rounded-lg shadow-2xl pointer-events-none whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">{day.emoji}</span>
-                          <span className="text-xs font-medium text-white/95">
-                            {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                          </span>
+                  return (
+                    <div
+                      key={index}
+                      className={`
+                        aspect-square w-9 h-9 md:w-11 md:h-11
+                        transition-all duration-200 cursor-pointer relative
+                        ${hasData ? 'border-2 border-black/40' : 'bg-slate-700/90 border-2 border-slate-600/80'}
+                        ${isToday ? 'ring-2 ring-offset-1 ring-offset-slate-800 ring-white/90 shadow-[0_0_12px_currentColor,0_0_24px_currentColor]' : ''}
+                        ${isHovered ? 'scale-150 z-30 shadow-2xl' : 'hover:scale-125 hover:z-20'}
+                      `}
+                      style={{
+                        backgroundColor: hasData ? day.color : undefined,
+                        color: hasData ? day.color : undefined,
+                        boxShadow: isToday && hasData
+                          ? `0 0 12px ${day.color}, 0 0 24px ${day.color}CC, 0 0 36px ${day.color}80, inset 0 0 8px ${day.color}80`
+                          : isToday
+                          ? '0 0 12px rgba(255, 255, 255, 0.6), 0 0 24px rgba(255, 255, 255, 0.4)'
+                          : hasData
+                          ? `inset 0 0 4px ${day.color}40, 0 2px 4px rgba(0,0,0,0.3)`
+                          : undefined,
+                      }}
+                      onMouseEnter={() => handleDayHover(index)}
+                      onMouseLeave={handleDayLeave}
+                      title={day ? `${day.date} ${day.emoji}` : undefined}
+                    >
+                      {/* Tooltip for this day */}
+                      {isHovered && day && (
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 z-50 px-3 py-2 bg-slate-900/98 backdrop-blur-md border border-white/30 rounded-lg shadow-2xl pointer-events-none whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{day.emoji}</span>
+                            <span className="text-xs font-medium text-white/95">
+                              {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </span>
+                          </div>
+                          {/* Tooltip arrow */}
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-px w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-transparent border-t-white/30" />
                         </div>
-                        {/* Tooltip arrow */}
-                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-px w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-transparent border-t-white/30" />
-                      </div>
-                    )}
-                    
-                    {/* Subtle inner glow for filled days */}
-                    {hasData && !isToday && (
-                      <div 
-                        className="absolute inset-0 opacity-40"
-                        style={{
-                          background: `radial-gradient(circle at center, ${day.color}60, transparent 60%)`,
-                        }}
-                      />
-                    )}
-                    
-                    {/* Pixel art style inner highlight */}
-                    {hasData && (
-                      <div 
-                        className="absolute top-0 left-0 w-1/2 h-1/2 opacity-20"
-                        style={{
-                          background: `linear-gradient(135deg, ${day.color}80, transparent)`,
-                        }}
-                      />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-            
-            {/* Grid info text */}
-            <div className="mt-5 text-center">
-              <p className="text-xs text-white/40 font-light tracking-wide">
-                365 days • {dailyMoods.filter(m => m.isMinted).length} minted
-              </p>
+                      )}
+                      
+                      {/* Subtle inner glow for filled days */}
+                      {hasData && !isToday && (
+                        <div 
+                          className="absolute inset-0 opacity-50"
+                          style={{
+                            background: `radial-gradient(circle at center, ${day.color}80, transparent 70%)`,
+                          }}
+                        />
+                      )}
+                      
+                      {/* Pixel art style inner highlight */}
+                      {hasData && (
+                        <div 
+                          className="absolute top-0 left-0 w-1/2 h-1/2 opacity-30"
+                          style={{
+                            background: `linear-gradient(135deg, ${day.color}CC, transparent)`,
+                          }}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {/* Grid info text */}
+              <div className="mt-6 text-center">
+                <p className="text-xs text-white/50 font-light tracking-wide">
+                  365 days • {dailyMoods.filter(m => m.isMinted).length} minted
+                </p>
+              </div>
             </div>
           </div>
         </div>
