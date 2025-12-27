@@ -8,8 +8,9 @@ export function MoodGrid() {
   const { address } = useAccount();
   const [svgContent, setSvgContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [contractError, setContractError] = useState<boolean>(false);
 
-  // Check if user has a token
+  // Check if user has a token - with better error handling
   const { data: balance, error: balanceError } = useReadContract({
     address: BASELOG_CONTRACT_ADDRESS,
     abi: BASELOG_ABI,
@@ -17,6 +18,7 @@ export function MoodGrid() {
     args: address ? [address] : undefined,
     query: {
       enabled: !!address,
+      retry: false, // Don't retry on failure
     },
   });
 
@@ -27,9 +29,27 @@ export function MoodGrid() {
     functionName: "generateSVG",
     args: address ? [address] : undefined,
     query: {
-      enabled: !!address && !!balance && balance > 0n,
+      enabled: !!address && !!balance && balance > 0n && !contractError,
+      retry: false,
     },
   });
+
+  useEffect(() => {
+    // Check if contract address is invalid (balanceOf returns error)
+    if (balanceError) {
+      console.error("Contract read error:", balanceError);
+      // Check if it's a contract not found error
+      const errorMessage = balanceError.message || balanceError.toString();
+      if (errorMessage.includes("returned no data") || 
+          errorMessage.includes("is not a contract") ||
+          errorMessage.includes("ContractFunctionZeroDataError")) {
+        setContractError(true);
+        setError("Contract address not found. Please check your configuration.");
+      }
+    } else {
+      setContractError(false);
+    }
+  }, [balanceError]);
 
   useEffect(() => {
     try {
@@ -45,15 +65,15 @@ export function MoodGrid() {
   }, [svg]);
 
   useEffect(() => {
-    if (balanceError || svgError) {
-      console.error("Contract read error:", balanceError || svgError);
+    if (svgError && !contractError) {
+      console.error("SVG fetch error:", svgError);
       setError("Failed to fetch grid data");
     }
-  }, [balanceError, svgError]);
+  }, [svgError, contractError]);
 
   // Refetch SVG when address changes or after a delay (to catch updates)
   useEffect(() => {
-    if (address && balance && balance > 0n) {
+    if (address && balance && balance > 0n && !contractError) {
       const timer = setTimeout(() => {
         try {
           refetchSvg();
@@ -64,7 +84,7 @@ export function MoodGrid() {
       }, 3000); // Refetch after 3 seconds
       return () => clearTimeout(timer);
     }
-  }, [address, balance, refetchSvg]);
+  }, [address, balance, refetchSvg, contractError]);
 
   if (!address) {
     return (
@@ -72,6 +92,28 @@ export function MoodGrid() {
         <p className="text-center text-gray-500">
           Connect your wallet to view your mood grid
         </p>
+      </div>
+    );
+  }
+
+  // Show contract error message if contract is not found
+  if (contractError) {
+    return (
+      <div className="mood-grid-container p-8 bg-white rounded-2xl shadow-sm border border-gray-100">
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="w-32 h-32 bg-gradient-to-br from-red-200 to-orange-200 rounded-lg flex items-center justify-center mb-4">
+            <span className="text-4xl">⚠️</span>
+          </div>
+          <p className="text-gray-600 text-sm text-center mb-2 font-semibold">
+            Contract Not Found
+          </p>
+          <p className="text-gray-500 text-xs text-center mb-4 max-w-md">
+            The contract address <code className="bg-gray-100 px-2 py-1 rounded">{BASELOG_CONTRACT_ADDRESS}</code> is not deployed or invalid.
+          </p>
+          <p className="text-gray-500 text-xs text-center max-w-md">
+            Please make sure the contract is deployed to Base Sepolia and the address is set correctly in your .env.local file as NEXT_PUBLIC_CONTRACT_ADDRESS.
+          </p>
+        </div>
       </div>
     );
   }
@@ -92,7 +134,7 @@ export function MoodGrid() {
         <h2 className="text-xl font-semibold text-gray-900">Your Year in Pixels</h2>
       </div>
       
-      {error ? (
+      {error && !contractError ? (
         <div className="flex flex-col items-center justify-center py-12">
           <div className="w-32 h-32 bg-gradient-to-br from-purple-200 to-pink-200 rounded-lg flex items-center justify-center mb-4">
             <span className="text-4xl">📊</span>
