@@ -126,9 +126,9 @@ export function MoodGrid() {
           )}
         </div>
 
-        {/* NFT Pixel Art Grid */}
+        {/* NFT Pixel Art Grid - Horizontal Layout */}
         <div className="relative mb-4 flex justify-center w-full">
-          <div className="relative w-full max-w-xl mx-auto">
+          <div className="relative w-full" style={{ maxWidth: '66.666%' }}>
             {/* NFT Frame */}
             <div className="relative p-3 md:p-4 bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm border-2 border-white/25 rounded-xl shadow-2xl shadow-black/40">
               {/* Outer glow */}
@@ -143,7 +143,7 @@ export function MoodGrid() {
               {/* Inner border */}
               <div className="absolute inset-2 border border-white/15 rounded-lg pointer-events-none" />
               
-              {/* 365 Pixel Grid - True Pixel Art Style */}
+              {/* 365 Pixel Grid - Horizontal Layout (21 columns x ~17 rows) */}
               <div className="relative flex flex-wrap gap-[1px] md:gap-[1.5px] justify-center" style={{ width: '100%' }}>
                 {daysArray.map((day, index) => {
                   const isToday = index === todayIndex;
@@ -157,8 +157,8 @@ export function MoodGrid() {
                       onMouseEnter={() => setHoveredDay(index)}
                       onMouseLeave={() => setHoveredDay(null)}
                       style={{
-                        width: 'calc((100% - 6px) / 7)',
-                        maxWidth: 'calc((100% - 6px) / 7)',
+                        width: 'calc((100% - 20px) / 21)',
+                        maxWidth: 'calc((100% - 20px) / 21)',
                         aspectRatio: '1',
                       }}
                     >
