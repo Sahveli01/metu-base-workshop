@@ -1,62 +1,72 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { useAccount, useReadContract } from "wagmi";
-import { BASELOG_ABI, BASELOG_CONTRACT_ADDRESS, MOOD_OPTIONS, getDayIndex } from "@/lib/contract";
+import { useEffect, useState, useRef, useMemo } from "react";
+import { useAccount } from "wagmi";
+import { MOOD_OPTIONS, getDayIndex } from "@/lib/contract";
+
+interface DayData {
+  date: string;
+  color: string;
+  emoji: string;
+  moodValue: number | null;
+}
 
 export function MoodGrid() {
   const { address } = useAccount();
-  const [svgContent, setSvgContent] = useState<string | null>(null);
+  const [hoveredDay, setHoveredDay] = useState<number | null>(null);
   const [pendingMood, setPendingMood] = useState<number | null>(null);
+  const [moodData, setMoodData] = useState<Map<number, DayData>>(new Map());
   const gridRef = useRef<HTMLDivElement>(null);
 
-  // Fetch SVG from contract (optional, we'll use placeholder)
-  const { data: svg, refetch: refetchSvg } = useReadContract({
-    address: BASELOG_CONTRACT_ADDRESS,
-    abi: BASELOG_ABI,
-    functionName: "generateSVG",
-    args: address ? [address] : undefined,
-    query: {
-      enabled: !!address,
-      retry: false,
-    },
-  });
+  // Get today's index
+  const todayIndex = useMemo(() => getDayIndex(), []);
 
-  // Generate placeholder SVG based on mood (dark theme optimized)
-  const generatePlaceholderSVG = (moodValue: number): string => {
-    const dayIndex = getDayIndex();
-    const moodColor = MOOD_OPTIONS[moodValue]?.color || "#374151";
-    
-    let cells = "";
-    const cols = 7;
+  // Generate 365 days array with data
+  const daysArray = useMemo(() => {
+    const days: (DayData | null)[] = [];
+    const startOfYear = new Date(new Date().getFullYear(), 0, 1);
     
     for (let i = 0; i < 365; i++) {
-      const x = (i % cols) * 14;
-      const y = Math.floor(i / cols) * 14;
+      const currentDate = new Date(startOfYear);
+      currentDate.setDate(startOfYear.getDate() + i);
+      const dateString = currentDate.toISOString().split('T')[0];
+      const dayData = moodData.get(i);
       
-      // Highlight today's cell with selected mood color, others are dark gray
-      const color = i === dayIndex ? moodColor : "#374151";
-      
-      cells += `<rect x="${x}" y="${y}" width="12" height="12" fill="${color}" rx="2"/>`;
+      if (dayData) {
+        days.push(dayData);
+      } else {
+        days.push({
+          date: dateString,
+          color: "#374151",
+          emoji: "",
+          moodValue: null,
+        });
+      }
     }
     
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 750"><rect width="100%" height="100%" fill="#1e293b"/>${cells}</svg>`;
-  };
+    return days;
+  }, [moodData]);
 
-  // Listen for transaction success event - AGGRESSIVE MODE
+  // Listen for transaction success
   useEffect(() => {
     const handleTransactionSuccess = (event: CustomEvent) => {
-      console.log("MoodGrid received transaction success event:", event.detail);
       const moodValue = event.detail?.moodValue ?? null;
       
       if (moodValue !== null) {
         setPendingMood(moodValue);
+        const mood = MOOD_OPTIONS[moodValue];
         
-        // IMMEDIATELY show placeholder grid
-        const placeholderSVG = generatePlaceholderSVG(moodValue);
-        setSvgContent(placeholderSVG);
+        // Update today's mood
+        const newData = new Map(moodData);
+        newData.set(todayIndex, {
+          date: new Date().toISOString().split('T')[0],
+          color: mood.color,
+          emoji: mood.emoji,
+          moodValue: moodValue,
+        });
+        setMoodData(newData);
         
-        // Scroll to grid after a brief delay to ensure DOM is updated
+        // Scroll to grid
         setTimeout(() => {
           if (gridRef.current) {
             gridRef.current.scrollIntoView({ 
@@ -66,13 +76,6 @@ export function MoodGrid() {
             });
           }
         }, 300);
-        
-        // Try to fetch real SVG in background (don't wait for it)
-        setTimeout(() => {
-          refetchSvg().catch(() => {
-            // Keep placeholder if contract fails
-          });
-        }, 2000);
       }
     };
 
@@ -80,26 +83,7 @@ export function MoodGrid() {
     return () => {
       window.removeEventListener("moodTransactionSuccess", handleTransactionSuccess as EventListener);
     };
-  }, [refetchSvg]);
-
-  // Update SVG if contract returns data and scroll to grid
-  useEffect(() => {
-    if (svg && typeof svg === "string" && svg.trim().length > 0) {
-      setSvgContent(svg);
-      setPendingMood(null);
-      
-      // Scroll to grid when contract SVG is loaded
-      setTimeout(() => {
-        if (gridRef.current) {
-          gridRef.current.scrollIntoView({ 
-            behavior: "smooth", 
-            block: "start",
-            inline: "nearest"
-          });
-        }
-      }, 200);
-    }
-  }, [svg]);
+  }, [moodData, todayIndex]);
 
   if (!address) {
     return (
@@ -114,69 +98,175 @@ export function MoodGrid() {
     );
   }
 
-  // Show grid if we have SVG content
-  if (svgContent) {
-    return (
-      <div 
-        ref={gridRef} 
-        className="relative backdrop-blur-xl bg-gradient-to-br from-slate-900/80 via-slate-800/70 to-slate-900/80 rounded-3xl p-6 md:p-8 border border-white/10 shadow-2xl animate-fade-in"
-        id="mood-grid-container"
-      >
-        {/* Subtle gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 rounded-3xl pointer-events-none" />
-        
-        {/* Content */}
-        <div className="relative z-10">
-          {/* Header */}
-          <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div>
-              <h2 className="text-2xl md:text-3xl font-light text-white/95 tracking-tight mb-1">
-                Your Year in Pixels
-              </h2>
-              <p className="text-xs md:text-sm text-white/50 font-light">
-                Track your daily mood journey
-              </p>
-            </div>
-            {pendingMood !== null && (
-              <div className="flex items-center gap-2 px-4 py-2 backdrop-blur-md bg-emerald-500/20 border border-emerald-400/30 rounded-full animate-slide-in-top">
-                <span className="text-emerald-300 text-sm">✓</span>
-                <span className="text-xs md:text-sm text-emerald-300/90 font-medium">Saved!</span>
-              </div>
-            )}
-          </div>
-          
-          {/* Grid Container */}
-          <div className="relative mb-6">
-            <div className="flex justify-center overflow-x-auto pb-2 -mx-2 px-2">
-              <div
-                className="mood-grid-svg rounded-2xl overflow-hidden backdrop-blur-sm bg-slate-800/30 p-4 border border-white/5"
-                dangerouslySetInnerHTML={{ __html: svgContent }}
-                style={{
-                  maxWidth: "100%",
-                  height: "auto",
-                  filter: "drop-shadow(0 4px 16px rgba(0, 0, 0, 0.3))",
-                }}
-              />
-            </div>
-          </div>
-          
-          {/* Footer Text */}
-          <p className="text-xs md:text-sm text-center text-white/50 font-light tracking-wide">
-            Each square represents a day. Log your mood daily to build your on-chain journal.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // No grid content yet
   return (
-    <div className="relative backdrop-blur-xl bg-gradient-to-br from-slate-900/80 via-slate-800/70 to-slate-900/80 rounded-3xl p-8 md:p-10 border border-white/10 shadow-2xl animate-fade-in">
+    <div 
+      ref={gridRef} 
+      className="relative backdrop-blur-xl bg-gradient-to-br from-slate-900/80 via-slate-800/70 to-slate-900/80 rounded-3xl p-6 md:p-8 border border-white/10 shadow-2xl animate-fade-in"
+      id="mood-grid-container"
+    >
+      {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 rounded-3xl pointer-events-none" />
+      
       <div className="relative z-10">
-        <p className="text-center text-white/60 text-sm md:text-base font-light tracking-wide">
-          Log your first mood to mint your BaseLog NFT and see your grid!
+        {/* Header */}
+        <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-light text-white/95 tracking-tight mb-1">
+              Your Year in Pixels
+            </h2>
+            <p className="text-xs md:text-sm text-white/50 font-light">
+              Track your daily mood journey
+            </p>
+          </div>
+          {pendingMood !== null && (
+            <div className="flex items-center gap-2 px-4 py-2 backdrop-blur-md bg-emerald-500/20 border border-emerald-400/30 rounded-full animate-slide-in-top">
+              <span className="text-emerald-300 text-sm">✓</span>
+              <span className="text-xs md:text-sm text-emerald-300/90 font-medium">Saved!</span>
+            </div>
+          )}
+        </div>
+
+        {/* NFT Pixel Art Grid */}
+        <div className="relative mb-6 flex justify-center w-full">
+          <div className="relative w-full max-w-2xl mx-auto">
+            {/* NFT Frame */}
+            <div className="relative p-6 md:p-8 bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm border-2 border-white/25 rounded-2xl shadow-2xl shadow-black/40">
+              {/* Outer glow */}
+              <div className="absolute -inset-3 bg-gradient-to-br from-purple-500/20 via-blue-500/20 to-transparent rounded-2xl blur-2xl -z-10" />
+              
+              {/* Corner decorations */}
+              <div className="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-white/40 rounded-tl" />
+              <div className="absolute top-3 right-3 w-6 h-6 border-t-2 border-r-2 border-white/40 rounded-tr" />
+              <div className="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-white/40 rounded-bl" />
+              <div className="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-white/40 rounded-br" />
+              
+              {/* Inner border */}
+              <div className="absolute inset-4 border border-white/15 rounded-lg pointer-events-none" />
+              
+              {/* 365 Pixel Grid - True Pixel Art Style */}
+              <div className="relative flex flex-wrap gap-[2px] md:gap-[2.5px] justify-center" style={{ width: '100%' }}>
+                {daysArray.map((day, index) => {
+                  const isToday = index === todayIndex;
+                  const hasData = day.moodValue !== null;
+                  const isHovered = hoveredDay === index;
+
+                  return (
+                    <div
+                      key={index}
+                      className="relative group"
+                      onMouseEnter={() => setHoveredDay(index)}
+                      onMouseLeave={() => setHoveredDay(null)}
+                      style={{
+                        width: 'calc((100% - 12px) / 7)',
+                        maxWidth: 'calc((100% - 12px) / 7)',
+                        aspectRatio: '1',
+                      }}
+                    >
+                      {/* Pixel Square */}
+                      <div
+                        className={`
+                          w-full h-full
+                          transition-all duration-150 cursor-pointer relative
+                          ${hasData ? '' : 'bg-slate-700/80 border border-slate-600/70'}
+                          ${isToday ? 'ring-2 ring-white/90 ring-offset-1 ring-offset-slate-800' : ''}
+                          ${isHovered ? 'scale-150 z-30' : 'hover:scale-125 hover:z-20'}
+                        `}
+                        style={{
+                          backgroundColor: hasData ? day.color : undefined,
+                          boxShadow: isToday && hasData
+                            ? `0 0 8px ${day.color}, 0 0 16px ${day.color}CC, inset 0 0 4px ${day.color}80`
+                            : isToday
+                            ? '0 0 8px rgba(255, 255, 255, 0.6), 0 0 16px rgba(255, 255, 255, 0.4)'
+                            : hasData
+                            ? `inset 0 0 2px ${day.color}30, 0 1px 2px rgba(0,0,0,0.4)`
+                            : undefined,
+                          border: hasData ? `1px solid ${day.color}40` : undefined,
+                        }}
+                      >
+                        {/* Pixel art 3D effect */}
+                        {hasData && (
+                          <>
+                            <div 
+                              className="absolute top-0 left-0 right-0 h-[30%] opacity-40"
+                              style={{
+                                background: `linear-gradient(to bottom, ${day.color}CC, transparent)`,
+                              }}
+                            />
+                            <div 
+                              className="absolute top-0 left-0 bottom-0 w-[30%] opacity-40"
+                              style={{
+                                background: `linear-gradient(to right, ${day.color}CC, transparent)`,
+                              }}
+                            />
+                            <div 
+                              className="absolute bottom-0 left-0 right-0 h-[30%] opacity-30"
+                              style={{
+                                background: `linear-gradient(to top, rgba(0,0,0,0.4), transparent)`,
+                              }}
+                            />
+                            <div 
+                              className="absolute top-0 right-0 bottom-0 w-[30%] opacity-30"
+                              style={{
+                                background: `linear-gradient(to left, rgba(0,0,0,0.4), transparent)`,
+                              }}
+                            />
+                          </>
+                        )}
+                      </div>
+                      
+                      {/* Tooltip */}
+                      {isHovered && hasData && (
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50 px-3 py-2 bg-slate-900/98 backdrop-blur-md border border-white/30 rounded-lg shadow-2xl pointer-events-none whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{day.emoji}</span>
+                            <span className="text-xs font-medium text-white/95">
+                              {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </span>
+                          </div>
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-px w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-transparent border-t-white/30" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {/* Grid info */}
+              <div className="mt-6 text-center">
+                <p className="text-xs text-white/50 font-light tracking-wide">
+                  365 days • {moodData.size} logged
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Text */}
+        <p className="text-xs md:text-sm text-center text-white/50 font-light tracking-wide mb-6">
+          Each square represents a day. Log your mood daily to build your on-chain journal.
         </p>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col items-center gap-2">
+            <button
+              onClick={() => console.log("Mint clicked")}
+              className="w-full px-6 py-3 bg-white text-slate-900 font-medium rounded-xl hover:bg-white/90 transition-all duration-200 shadow-lg hover:shadow-xl active:scale-[0.98]"
+            >
+              Mint Your Year in Pixels NFT
+            </button>
+            <p className="text-xs text-gray-400 font-light">
+              Soulbound NFT (Non-transferable)
+            </p>
+          </div>
+
+          <button
+            onClick={() => console.log("Share clicked")}
+            className="w-full px-6 py-3 border-2 border-white/20 text-white font-medium rounded-xl hover:border-white/30 hover:bg-white/5 transition-all duration-200 active:scale-[0.98]"
+          >
+            Share on Farcaster
+          </button>
+        </div>
       </div>
     </div>
   );
