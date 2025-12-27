@@ -9,12 +9,12 @@ export function MoodGrid() {
   const [svgContent, setSvgContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Check if user has a token
-  // Note: If contract doesn't exist, this will fail silently and balance will be undefined
-  const { data: balance, error: balanceError } = useReadContract({
+  // Try to fetch SVG directly - if user has logged mood, this will work
+  // We don't check balanceOf first because it may fail even when user has a token
+  const { data: svg, refetch: refetchSvg, error: svgError } = useReadContract({
     address: BASELOG_CONTRACT_ADDRESS,
     abi: BASELOG_ABI,
-    functionName: "balanceOf",
+    functionName: "generateSVG",
     args: address ? [address] : undefined,
     query: {
       enabled: !!address,
@@ -22,25 +22,6 @@ export function MoodGrid() {
     },
   });
 
-  // Fetch SVG with error handling
-  const { data: svg, refetch: refetchSvg, error: svgError } = useReadContract({
-    address: BASELOG_CONTRACT_ADDRESS,
-    abi: BASELOG_ABI,
-    functionName: "generateSVG",
-    args: address ? [address] : undefined,
-    query: {
-      enabled: !!address && !!balance && balance > 0n,
-      retry: false,
-    },
-  });
-
-  useEffect(() => {
-    // Log balance errors but don't treat them as critical
-    // They could mean: user has no tokens, contract doesn't exist, or RPC issue
-    if (balanceError) {
-      console.warn("Balance check error:", balanceError);
-    }
-  }, [balanceError]);
 
   useEffect(() => {
     try {
@@ -62,20 +43,32 @@ export function MoodGrid() {
     }
   }, [svgError]);
 
-  // Refetch SVG when address changes or after a delay (to catch updates)
+  // Refetch SVG when address changes, after page focus, or periodically
   useEffect(() => {
-    if (address && balance && balance > 0n) {
-      const timer = setTimeout(() => {
-        try {
-          refetchSvg();
-        } catch (err) {
-          console.error("Error refetching SVG:", err);
-          setError("Failed to refresh grid");
-        }
-      }, 3000); // Refetch after 3 seconds
-      return () => clearTimeout(timer);
+    if (address) {
+      // Refetch immediately when component mounts or address changes
+      const immediateTimer = setTimeout(() => {
+        refetchSvg();
+      }, 1000); // First refetch after 1 second
+      
+      // Refetch periodically to catch updates
+      const periodicTimer = setInterval(() => {
+        refetchSvg();
+      }, 5000); // Every 5 seconds
+      
+      // Refetch when page comes into focus (user returns to tab)
+      const handleFocus = () => {
+        refetchSvg();
+      };
+      window.addEventListener('focus', handleFocus);
+      
+      return () => {
+        clearTimeout(immediateTimer);
+        clearInterval(periodicTimer);
+        window.removeEventListener('focus', handleFocus);
+      };
     }
-  }, [address, balance, refetchSvg]);
+  }, [address, refetchSvg]);
 
   if (!address) {
     return (
@@ -87,15 +80,20 @@ export function MoodGrid() {
     );
   }
 
-  // If balance is 0 or balanceOf failed, show "log first mood" message
-  if (!balance || balance === 0n) {
-    return (
-      <div className="mood-grid-container p-8 bg-white rounded-2xl shadow-sm border border-gray-100">
-        <p className="text-center text-gray-500">
-          Log your first mood to mint your BaseLog NFT and see your grid!
-        </p>
-      </div>
-    );
+  // If SVG fetch failed or returned no data, show "log first mood" message
+  // This means user hasn't logged any mood yet
+  if (svgError || (!svg && address)) {
+    const errorMessage = svgError?.message || svgError?.toString() || "";
+    // Only show "log first mood" if it's a legitimate error (not a contract not found error)
+    if (!errorMessage.includes("is not a contract")) {
+      return (
+        <div className="mood-grid-container p-8 bg-white rounded-2xl shadow-sm border border-gray-100">
+          <p className="text-center text-gray-500">
+            Log your first mood to mint your BaseLog NFT and see your grid!
+          </p>
+        </div>
+      );
+    }
   }
 
   return (
