@@ -56,11 +56,11 @@ export function MoodGrid() {
   }, [svg]);
 
   useEffect(() => {
-    if (svgError && !contractError) {
+    if (svgError) {
       console.error("SVG fetch error:", svgError);
       setError("Failed to fetch grid data");
     }
-  }, [svgError, contractError]);
+  }, [svgError]);
 
   // Refetch SVG when address changes or after a delay (to catch updates)
   useEffect(() => {
